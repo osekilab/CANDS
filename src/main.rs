@@ -127,41 +127,41 @@ fn main() {
 
     let s1 = Stage {
         la: set!(
-            lit!( li!( ;; "John" ), 2 ),
-            lit!( li!( ;; "see" ), 1 ),
-            lit!( li!( ;; "John" ), 1 )
+            lit!( li!( ;;; "John" ), 2 ),
+            lit!( li!( ;;; "see" ), 1 ),
+            lit!( li!( ;;; "John" ), 1 )
         ),
         w:  w!()
     };
 
     let s2 = Stage {
         la: set!(
-            lit!( li!( ;; "John" ), 2 ),
-            lit!( li!( ;; "see" ), 1 )
+            lit!( li!( ;;; "John" ), 2 ),
+            lit!( li!( ;;; "see" ), 1 )
         ),
         w:  w!(
-            so!( lit!( li!( ;; "John" ), 1 ) )
+            so!( lit!( li!( ;;; "John" ), 1 ) )
         )
     };
 
     let s3 = Stage {
         la: set!(
-            lit!( li!( ;; "John" ), 2 )
+            lit!( li!( ;;; "John" ), 2 )
         ),
         w:  w!(
-            so!( lit!( li!( ;; "John" ), 1 ) ),
-            so!( lit!( li!( ;; "see" ), 1 ) )
+            so!( lit!( li!( ;;; "John" ), 1 ) ),
+            so!( lit!( li!( ;;; "see" ), 1 ) )
         )
     };
 
     let s4 = Stage {
         la: set!(
-            lit!( li!( ;; "John" ), 2 )
+            lit!( li!( ;;; "John" ), 2 )
         ),
         w:  w!(
             so!( 
-                so!( lit!( li!( ;; "John" ), 1 ) ),
-                so!( lit!( li!( ;; "see" ), 1 ) ),
+                so!( lit!( li!( ;;; "John" ), 1 ) ),
+                so!( lit!( li!( ;;; "see" ), 1 ) ),
             )
         )
     };
@@ -169,10 +169,10 @@ fn main() {
     let s5 = Stage {
         la: set!(),
         w:  w!(
-            so!( lit!( li!( ;; "John" ), 2 ) ),
+            so!( lit!( li!( ;;; "John" ), 2 ) ),
             so!( 
-                so!( lit!( li!( ;; "John" ), 1 ) ),
-                so!( lit!( li!( ;; "see" ), 1 ) ),
+                so!( lit!( li!( ;;; "John" ), 1 ) ),
+                so!( lit!( li!( ;;; "see" ), 1 ) ),
             )
         )
     };
@@ -181,10 +181,10 @@ fn main() {
         la: set!(),
         w:  w!(
             so!(
-                so!( lit!( li!( ;; "John" ), 2 ) ),
+                so!( lit!( li!( ;;; "John" ), 2 ) ),
                 so!( 
-                    so!( lit!( li!( ;; "John" ), 1 ) ),
-                    so!( lit!( li!( ;; "see" ), 1 ) ),
+                    so!( lit!( li!( ;;; "John" ), 1 ) ),
+                    so!( lit!( li!( ;;; "see" ), 1 ) ),
                 ),
             )
         )
@@ -198,7 +198,26 @@ fn main() {
         is_derivation(&il, &stages)
     );
 
-    // eprintln!("{}", stages[5].w.iter().next().unwrap());
+    eprintln!("\n\n\n");
+
+    for (k, stage) in stages.iter().enumerate() {
+        eprintln!("========================================");
+        eprintln!("Stage {}:", k+1);
+        eprintln!("Lexical array: {{ {} }}",
+            stage.la.iter()
+                .map(|li| format!("{}", li))
+                .reduce(|a, b| format!("{}, {}", a, b))
+                .unwrap_or_else(|| format!(""))
+        );
+        eprintln!("Workspace: {{\n{}\n}}",
+            stage.w.iter()
+                .map(|so| format!("{}", so))
+                .reduce(|a, b| format!("{},\n{}", a, b))
+                .unwrap_or_else(|| format!(""))
+        );
+    }
+
+    eprintln!("\n\n\n");
 }
 
 #[cfg(test)]

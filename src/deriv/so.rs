@@ -314,8 +314,11 @@ impl<'a> Iterator for ContainedSyntacticObjects<'a> {
 
 #[cfg(test)]
 mod tests {
+
     mod so {
         use crate::prelude::*;
+
+
 
         #[test]
         //  Use `cargo test -- --nocapture` to show the results.
@@ -403,6 +406,285 @@ mod tests {
             );
         }
     }
+
+
+
+    mod config {
+        use crate::prelude::*;
+
+        fn get_so() -> SyntacticObject {
+            /*
+                [
+                    A
+                    [
+                        [ B C D ]
+                        E
+                        [
+                            [ F G ]
+                            H
+                            I
+                        ]
+                    ]
+                ]
+            */
+            so!(
+                so!(lit!(li!("A"))),
+                so!(
+                    so!(
+                        so!(lit!(li!("B"))),
+                        so!(lit!(li!("C"))),
+                        so!(lit!(li!("D"))),
+                    ),
+                    so!(lit!(li!("E"))),
+                    so!(
+                        so!(
+                            so!(lit!(li!("F"))),
+                            so!(lit!(li!("G"))),
+                        ),
+                        so!(lit!(li!("H"))),
+                        so!(lit!(li!("I"))),
+                    ),
+                ),
+            )
+        }
+
+
+
+        #[test]
+        /// Test if a SO that is a lexical item token immediately contains the right things.
+        fn lit_immediately_contains() {
+            let so = so!(lit!(li!("A")));
+
+            //  Should not immediately contain anything
+            assert!(!so.immediately_contains(&so!(lit!(li!("A")))));
+            assert!(!so.immediately_contains(&so!(lit!(li!("A")))));
+            assert!(!so.immediately_contains(&so!()));
+            assert!(!so.immediately_contains(&so!(
+                so!(lit!(li!("A"))),
+            )));
+            assert!(!so.immediately_contains(&so!(
+                so!(lit!(li!("A"))),
+                so!(lit!(li!("B"))),
+                so!(lit!(li!("C"))),
+            )));
+        }
+
+
+
+        #[test]
+        /// Test if a SO that is a set immediately contains the right things.
+        fn set_immediately_contains() {
+            let so = get_so();
+
+            /*
+                Should immediately contain:
+                 -  A
+                -   [ [ B C D ] E [ [ F G ] H I ] ]
+            */
+            for other in [
+                so!(lit!(li!("A"))),
+
+                so!(
+                    so!(
+                        so!(lit!(li!("B"))),
+                        so!(lit!(li!("C"))),
+                        so!(lit!(li!("D"))),
+                    ),
+                    so!(lit!(li!("E"))),
+                    so!(
+                        so!(
+                            so!(lit!(li!("F"))),
+                            so!(lit!(li!("G"))),
+                        ),
+                        so!(lit!(li!("H"))),
+                        so!(lit!(li!("I"))),
+                    ),
+                )
+            ] {
+                assert!(so.contains(&other));
+            }
+
+            //  Should NOT immediately contain itself
+            assert!(!so.immediately_contains(&so));
+        }
+
+
+        #[test]
+        /// Test if a SO that is a lexical item token contains the right things.
+        fn lit_contains() {
+            let so = so!(lit!(li!("A")));
+
+            //  Should not contain anything
+            assert!(!so.contains(&so!(lit!(li!("A")))));
+            assert!(!so.contains(&so!(lit!(li!("A")))));
+            assert!(!so.contains(&so!()));
+            assert!(!so.contains(&so!(
+                so!(lit!(li!("A"))),
+            )));
+            assert!(!so.contains(&so!(
+                so!(lit!(li!("A"))),
+                so!(lit!(li!("B"))),
+                so!(lit!(li!("C"))),
+            )));
+        }
+
+
+
+        #[test]
+        /// Test if a SO that is a set contains the right things.
+        fn set_contains() {
+            let so = get_so();
+
+            //  Should contain each LIT
+            for ch in "ABCDEFGHI".chars() {
+                assert!(so.contains(
+                    &so!(lit!(li!(ch)))
+                ));
+            }
+
+            /*
+                Should contain:
+
+                 -  [ B C D ]
+                 -  [ F G ]
+                 -  [ [ F G ] H I ]
+                 -  [ [ B C D ] E [ [ F G ] H I ] ]
+            */
+            for other in [
+                so!(
+                    so!(lit!(li!("B"))),
+                    so!(lit!(li!("C"))),
+                    so!(lit!(li!("D"))),
+                ),
+
+                so!(
+                    so!(lit!(li!("F"))),
+                    so!(lit!(li!("G"))),
+                ),
+
+                so!(
+                    so!(
+                        so!(lit!(li!("F"))),
+                        so!(lit!(li!("G"))),
+                    ),
+                    so!(lit!(li!("H"))),
+                    so!(lit!(li!("I"))),
+                ),
+
+                so!(
+                    so!(
+                        so!(lit!(li!("B"))),
+                        so!(lit!(li!("C"))),
+                        so!(lit!(li!("D"))),
+                    ),
+                    so!(lit!(li!("E"))),
+                    so!(
+                        so!(
+                            so!(lit!(li!("F"))),
+                            so!(lit!(li!("G"))),
+                        ),
+                        so!(lit!(li!("H"))),
+                        so!(lit!(li!("I"))),
+                    ),
+                )
+            ] {
+                assert!(so.contains(&other));
+            }
+
+            //  Should NOT contain itself
+            assert!(!so.contains(&so));
+        }
+
+
+
+        #[test]
+        /// Test roothood.
+        fn is_root() {
+            let w1 = w!(
+                so!(lit!(li!("A"))),
+                so!(
+                    so!(lit!(li!("B"))),
+                    so!(lit!(li!("C"))),
+                )
+            );
+
+            let w2 = w!(
+                so!(lit!(li!("B")))
+            );
+
+            assert!(so!(lit!(li!("A"))).is_root(&w1));
+            assert!(!so!(lit!(li!("A"))).is_root(&w2));
+
+            assert!(!so!(lit!(li!("B"))).is_root(&w1));
+            assert!(so!(lit!(li!("B"))).is_root(&w2));
+
+            assert!(so!(
+                so!(lit!(li!("B"))),
+                so!(lit!(li!("C"))),
+            ).is_root(&w1));
+            assert!(!so!(
+                so!(lit!(li!("B"))),
+                so!(lit!(li!("C"))),
+            ).is_root(&w2));
+        }
+
+
+
+        #[test]
+        /// Test sisterhood
+        fn sisters_with() {
+            let under1 = so!(
+                so!(lit!(li!("A"))),
+                so!(lit!(li!("B"))),
+            );
+            let under2 = so!(
+                so!(lit!(li!("B"))),
+                so!(lit!(li!("C"))),
+            );
+            let under3 = so!(
+                so!(lit!(li!("B"))),
+                so!(
+                    so!(lit!(li!("B"))),
+                    so!(lit!(li!("C"))),
+                ),
+            );
+            let under4 = so!(
+                so!(lit!(li!("A"))),
+                so!(
+                    so!(lit!(li!("B"))),
+                    so!(
+                        so!(lit!(li!("B"))),
+                        so!(lit!(li!("C"))),
+                    ),
+                ),
+            );
+
+            let sis1 = so!(lit!(li!("A")));
+            let sis2 = so!(lit!(li!("B")));
+            let sis3 = so!(lit!(li!("C")));
+            let sis4 = so!(
+                so!(lit!(li!("B"))),
+                so!(lit!(li!("C"))),
+            );
+
+            //  Assert TRUE
+            assert!(sis1.sisters_with(&sis2, &under1));
+            assert!(sis2.sisters_with(&sis3, &under2));
+            assert!(sis2.sisters_with(&sis4, &under3));
+            assert!(sis1.sisters_with(&under3, &under4));
+
+            assert!(sis2.sisters_with(&sis1, &under1));
+            assert!(sis3.sisters_with(&sis2, &under2));
+            assert!(sis4.sisters_with(&sis2, &under3));
+            assert!(under3.sisters_with(&sis1, &under4));
+
+            //  Assert FALSE
+            assert!(!sis2.sisters_with(&sis4, &under4));
+            assert!(!sis4.sisters_with(&sis2, &under4));
+        }
+    }
+
+
 
     mod iter {
         use crate::prelude::*;

@@ -115,6 +115,15 @@ macro_rules! li {
             Some(String::from($shorthand))
         )
     };
+
+    ($shorthand:expr) => {
+        LexicalItem::new(
+            fset!(),
+            fset!(),
+            fset!(),
+            Some(String::from($shorthand))
+        )
+    };
 }
 
 pub(crate) use li;
@@ -126,6 +135,8 @@ mod tests {
     /// Tests for the `li!` macro.
     mod li {
         use crate::prelude::*;
+
+
 
         /// Make a lexical item with no semantics features, the syntactic feature
         /// "N", the phonological feature "Alex" and no shorthand.
@@ -143,6 +154,8 @@ mod tests {
             assert_eq!(li1, li2);
         }
 
+
+
         /// Make a lexical item with no semantics features, the syntactic feature
         /// "N", the phonological feature "Alex" and the shorthand "Alex".
         #[test]
@@ -159,6 +172,25 @@ mod tests {
             assert_eq!(li1, li2);
         }
 
+
+
+        /// Make a lexical item with no features, and the shorthand "Alex".
+        #[test]
+        fn empty_with_shorthand() {
+            let li1 = li!("Alex");
+
+            let li2 = LexicalItem {
+                sem:        fset!(),
+                syn:        fset!(),
+                phon:       fset!(),
+                shorthand:  Some(format!("Alex"))
+            };
+
+            assert_eq!(li1, li2);
+        }
+
+
+
         /// Make a lexical item with no semantics features, the syntactic feature
         /// "N", the phonological feature "Alex" and no shorthand. Check if the
         /// `std::fmt::Display` trait implementation for this lexical item is
@@ -174,6 +206,7 @@ mod tests {
                 "{ sem: {}; syn: {N}; phon: {Alex} }"
             );
         }
+
 
 
         /// Make a lexical item with no semantics features, the syntactic feature

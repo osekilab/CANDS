@@ -47,6 +47,10 @@ macro_rules! lit {
     ($li:expr, $k:expr) => {
         LexicalItemToken::new($li, $k)
     };
+
+    ($li:expr) => {
+        LexicalItemToken::new($li, 1)
+    };
 }
 
 pub(crate) use lit;
