@@ -12,11 +12,20 @@
 //  https://stackoverflow.com/a/41667202
 
 pub(crate) use crate::utils::{ Set, set };
-pub(crate) use crate::feature::{ Feature, f, fset };
-pub(crate) use crate::ops::{ Select, Merge, Transfer, BasicSelect, TokenBasedMerge, BasicTransfer };
+pub(crate) use crate::feature::{
+    Feature, f, fset, fvec,
+    wh_feature,
+    epp_feature,
+    comp_feature,
+    strong_light_verb_feature,
+    CATSEL_FEATURE_PREFIX
+};
+pub(crate) use crate::ops::{ select, token_based_merge, triggered_merge, is_strong_phase, transfer, cyclic_transfer };
 pub(crate) use crate::deriv::{
     UniversalGrammar, ILanguage, Stage, is_derivation, Workspace, w,
     li::{ LexicalItem, li },
     lit::{ LexicalItemToken, lit },
-    so::{ SyntacticObject, ContainedSyntacticObjects, so }
+    so::{ SyntacticObject, ContainedSyntacticObjects, so },
+    occur::{ Occurrence },
 };
+pub(crate) use crate::labels::{ Triggers, BasicTriggers };

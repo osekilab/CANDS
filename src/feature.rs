@@ -2,9 +2,20 @@ use std::fmt;
 
 
 
+macro_rules! wh_feature { () => { f!("wh") }; }
+macro_rules! epp_feature { () => { f!("epp") }; }
+macro_rules! comp_feature { () => { f!("C") } }
+macro_rules! strong_light_verb_feature { () => { f!("v*") } }
+
+pub(crate) use { wh_feature, epp_feature, comp_feature, strong_light_verb_feature };
+
+pub const CATSEL_FEATURE_PREFIX: &'static str = "=";
+
+
+
 /// Features are identified by strings.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Feature(String);
+pub struct Feature(pub String);
 
 
 
@@ -59,6 +70,26 @@ macro_rules! fset {
 }
 
 pub(crate) use fset;
+
+
+
+/// Macro to generate a feature vector.
+/// 
+/// # Example
+/// 
+/// ```
+/// fvec!["n", "+voiced", "EPP"]
+/// ```
+// #[macro_export]
+macro_rules! fvec {
+    [$($literal:expr),*] => {
+        {
+            vec![ $(f!($literal)),* ]
+        }
+    };
+}
+
+pub(crate) use fvec;
 
 
 

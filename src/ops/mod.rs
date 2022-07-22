@@ -1,87 +1,305 @@
-use crate::utils::{ Set };
-use crate::deriv::{
-    Stage,
-    lit::{ LexicalItemToken },
-    so::{ SyntacticObject }
-};
+use std::marker::{ PhantomData };
+use std::iter;
+
+use crate::prelude::*;
 
 
 
-/// A trait for the Select operation.
-pub trait Select {
-    /// Perform Select, given a lexical item token and a stage.
-    /// 
-    /// Return a stage on success, and an error message on failure.
-    fn select(a: LexicalItemToken, s: Stage) -> Result<Stage, String>;
+/// Select.
+/// 
+/// Return a stage on success, and an error message on failure.
+/// 
+/// From Definition 12 in C&S 2016, p. 47:
+/// 
+/// >Let $S$ be a stage in a derivation $S = \\langle \\textit{LA}, W \\rangle$.
+/// >
+/// >If lexical token $A \\in \\textit{LA}$, then $\\textrm{Select} (A, S) = \\langle \\textit{LA} - \\{ A \\}, W \\cup \\{ A \\} \\rangle$.
+pub fn select(a: LexicalItemToken, s: Stage) -> Result<Stage, String> {
+    let Stage { mut la, mut w } = s;
+
+    if !la.remove(&a) {
+        return Err(
+            format!("BasicSelect: error.\nIn the provided stage, the lexical array:\n{:#?}\ndoes not contain the provided lexical item token:\n{:#?}", la, a)
+        );
+    }
+
+    w.insert(SyntacticObject::LexicalItemToken(a));
+
+    Ok(Stage { la, w })
 }
 
-/// The implementation of Select as in Definition 12 in C&S 2016, p. 47.
+
+
+/// Token-based Merge.
 /// 
-/// See [`BasicSelect::select`] for more information.
-pub struct BasicSelect;
+/// From Definition 13 in C&S 2016, p. 47:
+/// 
+/// >Given any two distinct syntactic objects $A, B$, $\\textrm{Merge} (A, B) = \\{ A, B \\}$.
+pub fn token_based_merge(a: SyntacticObject, b: SyntacticObject, _w: &Workspace) -> Result<SyntacticObject, String> {
+    //  a and b must be distinct!
+    if a == b {
+        return Err(
+            format!("TokenBasedMerge: error.\nThe provided syntactic objects are not distinct.\nSyntactic object 1:\n{:#?}\nSyntactic object 2:\n{:#?}", a, b)
+        );
+    }
 
-impl Select for BasicSelect {
-    /// Select.
-    /// 
-    /// From Definition 12 in C&S 2016, p. 47:
-    /// 
-    /// >Let $S$ be a stage in a derivation $S = \\langle \\textit{LA}, W \\rangle$.
-    /// >
-    /// >If lexical token $A \\in \\textit{LA}$, then $\\textrm{Select} (A, S) = \\langle \\textit{LA} - \\{ A \\}, W \\cup \\{ A \\} \\rangle$.
-    fn select(a: LexicalItemToken, s: Stage) -> Result<Stage, String> {
-        let Stage { mut la, mut w } = s;
+    let pair = vec![ a, b ];
+    Ok(SyntacticObject::Set(pair))
+}
 
-        if !la.remove(&a) {
-            return Err(
-                format!("BasicSelect: error.\nIn the provided stage, the lexical array:\n{:#?}\ndoes not contain the provided lexical item token:\n{:#?}", la, a)
-            );
-        }
 
-        w.insert(SyntacticObject::LexicalItemToken(a));
 
-        Ok(Stage { la, w })
+/// Triggered (token-based) Merge.
+/// 
+/// From Definition 27 in C&S 2016, p. 64:
+/// 
+/// >Given any two distinct syntactic objects $A, B$, where $\\textrm{Triggers} (A) \neq \\varnothing$ and $\\textrm{Triggers} (B) = \\varnothing$, $\\textrm{Merge} (A, B) = \\{ A, B \\}$.
+pub fn triggered_merge<T: Triggers>(a: SyntacticObject, b: SyntacticObject, w: &Workspace) -> Result<SyntacticObject, String> {
+    // eprintln!("Triggered Merge: A =\n{}", a);
+    // eprintln!("Triggered Merge: B =\n{}", b);
+
+    //  a and b must be distinct!
+    if a == b {
+        // eprintln!("Triggered Merge: Error. A == B.");
+        return Err(
+            format!("TriggeredMerge: error.\nThe provided syntactic objects are not distinct.\nSyntactic object 1:\n{:#?}\nSyntactic object 2:\n{:#?}", a, b)
+        );
+    }
+
+    //  a must have at least one trigger feature!
+    let tfs_a = T::triggers(&a, w).map_err(|_| format!("tf a fail"))?;
+    if tfs_a.is_empty() {
+        // eprintln!("Triggered Merge: Error. Triggers(A) = {:?}", tfs_a);
+        return Err(
+            format!("TriggeredMerge: error.\nfor Merge (A, B), A must have at least one trigger feature.")
+        );
+    }
+    // eprintln!("Triggered Merge: So far so good. Triggers(A) = {:?}", tfs_a);
+
+    //  b must have zero trigger features!
+    let tfs_b = T::triggers(&b, w).map_err(|_| format!("tf b fail"))?;
+    if !tfs_b.is_empty() {
+        // eprintln!("Triggered Merge: Error. Triggers(B) = {:?}", tfs_b);
+        return Err(
+            format!("TriggeredMerge: error.\nfor Merge (A, B), B must have zero trigger features, but tfs of B = {:?}.", tfs_b)
+        );
+    }
+    // eprintln!("Triggered Merge: So far so good. Triggers(B) = {:?}", tfs_b);
+
+    let pair = vec![ a, b ];
+    Ok(SyntacticObject::Set(pair))
+}
+
+
+
+pub fn is_strong_phase<T: Triggers>(so: &SyntacticObject, w: &Workspace) -> bool {
+    w.contained_sos(false)
+        .find(|&maybe_head| {
+            match maybe_head {
+                &SyntacticObject::LexicalItemToken(ref maybe_label) => {
+                    so.is_maximal_projection_of::<T>(maybe_label, w) &&
+                    (
+                        maybe_label.li.syn.contains(&comp_feature!()) ||
+                        maybe_label.li.syn.contains(&strong_light_verb_feature!())
+                    )
+                },
+                _ => false,
+            }
+        })
+        .is_some()
+}
+
+
+
+fn transfer_pf<T: Triggers>(phase: &SyntacticObject, so: &SyntacticObject, w: &Workspace) -> Vec<Feature> {
+    let res = match so {
+        &SyntacticObject::LexicalItemToken(ref lit) =>
+            lit.li.phon.iter().map(|f| f.clone()).collect::<Vec<_>>(),
+
+        &SyntacticObject::Set(ref vec) => {
+            assert!(vec.len() == 2); // todo: don't assert, return Result
+
+            let x1 = &vec[0];
+            let x2 = &vec[1];
+
+            let mut pf1 = 
+                if x1.is_final(so, phase) {
+                    Some(transfer_pf::<T>(phase, x1, w))
+                }
+                else {
+                    None
+                };
+
+            let mut pf2 =
+                if x2.is_final(so, phase) {
+                    Some(transfer_pf::<T>(phase, x2, w))
+                }
+                else {
+                    None
+                };
+
+            eprintln!("TransferPF: X1 =\n{}", x1);
+            eprintln!("TransferPF: Is X1 final? {}", x1.is_final(so, phase));
+            eprintln!("TransferPF: PF of X1 = {:?}", pf1);
+            eprintln!("TransferPF: X2 =\n{}", x2);
+            eprintln!("TransferPF: Is X2 final? {}", x2.is_final(so, phase));
+            eprintln!("TransferPF: PF of X2 = {:?}", pf2);
+
+            match (pf1, pf2) {
+                (Some(mut pf1), Some(mut pf2)) => {
+                    if (x2.is_complement_of::<T>(x1, so, w) ||
+                        x1.is_specifier_of::<T>(x2, so, w)) {
+                        pf1.extend(pf2);
+                        pf1
+                    }
+                    else if (x1.is_complement_of::<T>(x2, so, w) ||
+                        x2.is_specifier_of::<T>(x1, so, w)) {
+                        pf2.extend(pf1);
+                        pf2
+                    }
+                    else {
+                        panic!()
+                    }
+                },
+                (Some(pf1), None) => pf1,
+                (None, Some(pf2)) => pf2,
+                (None, None) => vec![],
+            }
+        },
+
+        &SyntacticObject::Transfer { ref pf, .. } => pf.clone(),
+    };
+
+    eprintln!("TransferPF: Result = {:?}", res);
+    res
+}
+
+
+
+fn transfer_lf(phase: &SyntacticObject, so: &SyntacticObject) -> Set<Feature> {
+    match so {
+        &SyntacticObject::LexicalItemToken(ref lit) =>
+            lit.li.sem.clone(),
+
+        &SyntacticObject::Set(ref vec) => {
+            assert!(vec.len() == 2); // todo: don't assert, return Result
+            vec.iter()
+                .map(|so| transfer_lf(phase, so))
+                .fold(
+                    set!(),
+                    |mut acc, sem| { acc.extend(sem.into_iter()); acc }
+                )
+        },
+
+        &SyntacticObject::Transfer { ref lf, .. } => lf.clone()
     }
 }
 
-/// A trait for the token-based Merge operation.
-pub trait Merge {
-    /// Perform Merge, given a pair of syntactic objects.
-    /// 
-    /// Return a syntactic object on success, and an error message on failure.
-    fn merge(a: SyntacticObject, b: SyntacticObject) -> Result<SyntacticObject, String>;
+
+
+pub fn transfer<T: Triggers>(phase: &SyntacticObject, so: SyntacticObject, w: &Workspace) -> SyntacticObject {
+    eprintln!("Transfer: We are trying to transfer SO =\n{}", so);
+    eprintln!("Transfer: In the phase\n{}", phase);
+    let pf = transfer_pf::<T>(&phase, &so, w);
+    let lf = transfer_lf(&phase, &so);
+
+    SyntacticObject::Transfer { so: Box::new(so), pf, lf }
 }
 
-/// The implementation of a token-based Merge as in Definition 13 in C&S 2016, p. 47.
-/// 
-/// See [`TokenBasedMerge::merge`] for more information.
-pub struct TokenBasedMerge;
 
-impl Merge for TokenBasedMerge {
-    /// Token-based Merge.
-    /// 
-    /// From Definition 13 in C&S 2016, p. 47:
-    /// 
-    /// >Given any two distinct syntactic objects $A, B$, $\\textrm{Merge} (A, B) = \\{ A, B \\}$.
-    fn merge(a: SyntacticObject, b: SyntacticObject) -> Result<SyntacticObject, String> {
-        //  a and b must be distinct!
-        if a == b {
-            return Err(
-                format!("TokenBasedMerge: error.\nThe provided syntactic objects are not distinct.\nSyntactic object 1:\n{:#?}\nSyntactic object 2:\n{:#?}", a, b)
-            );
-        }
 
-        let mut pair = Set::new();
+fn unwind_and_transfer<T: Triggers>(mut so: SyntacticObject, head: &SyntacticObject, w: &Workspace) -> Result<SyntacticObject, SyntacticObject> {
+    enum Action {
+        Unwind, TransferFirst, TransferSecond, Return,
+    }
 
-        pair.insert(a);
-        pair.insert(b);
+    //  First, figure out what we should do
+    let action = match so {
+        SyntacticObject::Set(ref vec) => {
+            if vec.len() == 2 {
+                if vec[0].is_complement_of::<T>(&head, &so, w) {
+                    eprintln!("UnwindAndTransfer: This phase:\n{}", so);
+                    eprintln!("UnwindAndTransfer: Has the head:\n{}", head);
+                    eprintln!("UnwindAndTransfer: And the complement:\n{}", vec[0]);
+                    eprintln!("UnwindAndTransfer: Therefore, the complement will be transferred.");
+                    Action::TransferFirst
+                }
+                else if vec[1].is_complement_of::<T>(&head, &so, w) {
+                    eprintln!("UnwindAndTransfer: This phase:\n{}", so);
+                    eprintln!("UnwindAndTransfer: Has the head:\n{}", head);
+                    eprintln!("UnwindAndTransfer: And the complement:\n{}", vec[1]);
+                    eprintln!("UnwindAndTransfer: Therefore, the complement will be transferred.");
+                    Action::TransferSecond
+                }
+                else {
+                    Action::Unwind
+                }
+            }
+            else {
+                Action::Unwind
+            }
+        },
+        _ => Action::Return,
+    };
 
-        Ok(SyntacticObject::Set(pair))
+    //  Then carry out the action
+    match action {
+        Action::Return => Err(so),
+        Action::Unwind => {
+            if let SyntacticObject::Set(vec) = so {
+                let (vec, is_ok) = vec.into_iter()
+                    .map(|so| {
+                        match unwind_and_transfer::<T>(so, head, w) {
+                            Ok(so) => (so, true),
+                            Err(so) => (so, false),
+                        }
+                    })
+                    .fold(
+                        (vec![], false),
+                        |(mut acc, is_ok1), (so, is_ok2)| {
+                            acc.push(so);
+                            (acc, is_ok1 || is_ok2)
+                        }
+                    );
+
+                match is_ok {
+                    true => Ok(SyntacticObject::Set(vec)),
+                    false => Err(SyntacticObject::Set(vec)),
+                }
+            }
+            else {
+                panic!()
+            }
+        },
+
+        _ => {
+            if let SyntacticObject::Set(ref mut vec) = so {
+                let x1 = vec[0].clone();
+                let x2 = vec[1].clone();
+    
+                Ok(SyntacticObject::Set(match action {
+                    Action::TransferFirst => vec![ transfer::<T>(&so, x1, w), x2 ],
+                    Action::TransferSecond => vec![ x1, transfer::<T>(&so, x2, w) ],
+                    _ => panic!(),
+                }))
+            }
+            else {
+                panic!()
+            }
+        },
     }
 }
 
-/// A trait for the Transfer operation.
-pub trait Transfer {}
 
-pub struct BasicTransfer {}
 
-impl Transfer for BasicTransfer {}
+pub fn cyclic_transfer<T: Triggers>(so: SyntacticObject, w: &Workspace) -> Result<SyntacticObject, ()> {
+    match T::label_of(&so, w) {
+        Ok(label) => {
+            let head = so!(label.clone());
+            unwind_and_transfer::<T>(so, &head, w).map_err(|_| ())
+        },
+        _ => {
+            Err(())
+        }
+    }
+}

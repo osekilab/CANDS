@@ -100,18 +100,18 @@ impl fmt::Display for LexicalItem {
 macro_rules! li {
     ($($sem:expr),*; $($syn:expr),*; $($phon:expr),*) => {
         LexicalItem::new(
-            fset!($($sem)*),
-            fset!($($syn)*),
-            fset!($($phon)*),
+            fset!($($sem),*),
+            fset!($($syn),*),
+            fset!($($phon),*),
             None
         )
     };
 
     ($($sem:expr),*; $($syn:expr),*; $($phon:expr),*; $shorthand:expr) => {
         LexicalItem::new(
-            fset!($($sem)*),
-            fset!($($syn)*),
-            fset!($($phon)*),
+            fset!($($sem),*),
+            fset!($($syn),*),
+            fset!($($phon),*),
             Some(String::from($shorthand))
         )
     };

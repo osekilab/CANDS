@@ -98,6 +98,7 @@ mod feature;
 mod ops;
 mod deriv;
 mod prelude;
+mod labels;
 
 
 
@@ -110,92 +111,351 @@ use std::marker::PhantomData;
 fn main() {
     env_logger::init();
 
-    let mut lex = Set::new();
-    lex.insert( li!( ;; "John" ) );
-    lex.insert( li!( ;; "see" ) );
+
+
+    //  Lexical item shorthands
+    let me = || li!( "me'" ; "D", "1", "sg", "acc"; "me");
+    let HELP = || li!( "help'" ; "V", "=D"; "HELP");
+    let strong_light_verb = || li!( ; "v*", "=V", "=D", "acc"; "v*");
+    let she = || li!( "she'" ; "D", "3", "sg", "nom"; "she");
+    let PAST = || li!( ; "T", "=v*", "epp", "nom"; "PAST");
+    let nullcomp = || li!( ; "C", "=T"; "C");
+
+
+
+    //  Lexicon
+    let mut lex = set!(
+        me(), HELP(), strong_light_verb(), she(), PAST(), nullcomp()
+    );
 
     let ug = UniversalGrammar {
-        phon_f:     fset!("John", "see"),
-        syn_f:      fset!(),
-        sem_f:      fset!(),
-        select:     PhantomData::<BasicSelect>::default(),
-        merge:      PhantomData::<TokenBasedMerge>::default(),
-        transfer:   PhantomData::<BasicTransfer>::default(),
+        phon_f:     fset!("me", "HELP", "v*", "she", "PAST", "C"),
+        syn_f:      fset!("D", "V", "v*", "T", "C", "=D", "=V", "=v*", "=T", "1", "3", "sg", "nom", "acc", "epp"),
+        sem_f:      fset!("me'", "help'", "she'"),
     };
 
     let il = ILanguage { lex, ug };
 
+
+
+    let object = || lit!(me(), 1);
+    let root = || lit!(HELP(), 1);
+    let light_verb = ||lit!(strong_light_verb(), 1);
+    let subject = || lit!(she(), 1);
+    let tense = || lit!(PAST(), 1);
+    let comp = || lit!(nullcomp(), 1);
+
+
+
+    // let VP = || so!( root(), object(), );
+    // let vbar = || so!( light_verb(), VP(), );
+    // let vP = || so!( subject(), vbar(), );
+    // let Tbar = || so!( tense(), vP(), );
+    // let TP = || so! ( subject(), Tbar(), );
+    // let CP = || so! ( comp(), TP(), );
+
+
+
+    //  First stage.
     let s1 = Stage {
         la: set!(
-            lit!( li!( ;;; "John" ), 2 ),
-            lit!( li!( ;;; "see" ), 1 ),
-            lit!( li!( ;;; "John" ), 1 )
+            object(), root(), light_verb(), subject(), tense(), comp()
         ),
         w:  w!()
     };
 
+    //  Select the object.
     let s2 = Stage {
         la: set!(
-            lit!( li!( ;;; "John" ), 2 ),
-            lit!( li!( ;;; "see" ), 1 )
+            root(), light_verb(), subject(), tense(), comp()
         ),
         w:  w!(
-            so!( lit!( li!( ;;; "John" ), 1 ) )
+            so!(object())
         )
     };
 
+    //  Select the root.
     let s3 = Stage {
         la: set!(
-            lit!( li!( ;;; "John" ), 2 )
+            light_verb(), subject(), tense(), comp()
         ),
         w:  w!(
-            so!( lit!( li!( ;;; "John" ), 1 ) ),
-            so!( lit!( li!( ;;; "see" ), 1 ) )
+            so!(root()),
+            so!(object())
         )
     };
 
+    //  Merge root with object.
     let s4 = Stage {
         la: set!(
-            lit!( li!( ;;; "John" ), 2 )
+            light_verb(), subject(), tense(), comp()
         ),
         w:  w!(
-            so!( 
-                so!( lit!( li!( ;;; "John" ), 1 ) ),
-                so!( lit!( li!( ;;; "see" ), 1 ) ),
+            so!(
+                so!(root()),    //  root must come before object because triggered merge is not symmetric!
+                so!(object()),
             )
         )
     };
 
+    //  Select light verb.
     let s5 = Stage {
-        la: set!(),
+        la: set!(
+            subject(), tense(), comp()
+        ),
         w:  w!(
-            so!( lit!( li!( ;;; "John" ), 2 ) ),
-            so!( 
-                so!( lit!( li!( ;;; "John" ), 1 ) ),
-                so!( lit!( li!( ;;; "see" ), 1 ) ),
+            so!(light_verb()),
+            so!(
+                so!(root()),
+                so!(object()),
             )
         )
     };
 
+    //  Merge light verb with VP.
     let s6 = Stage {
-        la: set!(),
+        la: set!(
+            subject(), tense(), comp()
+        ),
         w:  w!(
             so!(
-                so!( lit!( li!( ;;; "John" ), 2 ) ),
-                so!( 
-                    so!( lit!( li!( ;;; "John" ), 1 ) ),
-                    so!( lit!( li!( ;;; "see" ), 1 ) ),
+                so!(light_verb()),
+                so!(
+                    so!(root()),
+                    so!(object()),
                 ),
             )
         )
     };
 
+    //  Select subject.
+    let s7 = Stage {
+        la: set!(
+            tense(), comp()
+        ),
+        w:  w!(
+            so!(subject()),
+            so!(
+                so!(light_verb()),
+                so!(
+                    so!(root()),
+                    so!(object()),
+                ),
+            )
+        )
+    };
+
+    //  Merge vP with subject.
+    let s8 = Stage {
+        la: set!(
+            tense(), comp()
+        ),
+        w:  w!(
+            so!(
+                so!(
+                    so!(light_verb()),
+                    so!(
+                        so!(root()),
+                        so!(object()),
+                    ),
+                ),
+                so!(subject()),
+            )
+        )
+    };
+
+    //  Cyclic-Transfer vP.
+    let s9 = Stage {
+        la: set!(
+            tense(), comp()
+        ),
+        w:  w!(
+            so!(
+                so!(
+                    so!(light_verb()),
+                    so!(
+                        so!(
+                            so!(root()),
+                            so!(object()),
+                        )
+                        => fvec![ "HELP", "me" ]; fset!( "help'", "me'" )
+                    ),
+                ),
+                so!(subject()),
+            )
+        )
+    };
+
+    //  Select T.
+    let s10 = Stage {
+        la: set!(
+            comp()
+        ),
+        w:  w!(
+            so!(tense()),
+            so!(
+                so!(
+                    so!(light_verb()),
+                    so!(
+                        so!(
+                            so!(root()),
+                            so!(object()),
+                        )
+                        => fvec![ "HELP", "me" ]; fset!( "help'", "me'" )
+                    ),
+                ),
+                so!(subject()),
+            )
+        )
+    };
+
+    //  Merge T with vP.
+    let s11 = Stage {
+        la: set!(
+            comp()
+        ),
+        w:  w!(
+            so!(
+                so!(tense()),
+                so!(
+                    so!(
+                        so!(light_verb()),
+                        so!(
+                            so!(
+                                so!(root()),
+                                so!(object()),
+                            )
+                            => fvec![ "HELP", "me" ]; fset!( "help'", "me'" )
+                        ),
+                    ),
+                    so!(subject()),
+                ),
+            )
+        )
+    };
+
+    //  Move subject to [Spec; TP].
+    let s12 = Stage {
+        la: set!(
+            comp()
+        ),
+        w:  w!(
+            so!(
+                so!(
+                    so!(tense()),
+                    so!(
+                        so!(
+                            so!(light_verb()),
+                            so!(
+                                so!(
+                                    so!(root()),
+                                    so!(object()),
+                                )
+                                => fvec![ "HELP", "me" ]; fset!( "help'", "me'" )
+                            ),
+                        ),
+                        so!(subject()),
+                    ),
+                ),
+                so!(subject()),
+            )
+        )
+    };
+
+    //  Select C.
+    let s13 = Stage {
+        la: set!(),
+        w:  w!(
+            so!(comp()),
+            so!(
+                so!(
+                    so!(tense()),
+                    so!(
+                        so!(
+                            so!(light_verb()),
+                            so!(
+                                so!(
+                                    so!(root()),
+                                    so!(object()),
+                                )
+                                => fvec![ "HELP", "me" ]; fset!( "help'", "me'" )
+                            ),
+                        ),
+                        so!(subject()),
+                    ),
+                ),
+                so!(subject()),
+            )
+        )
+    };
+
+    //  Merge C with TP.
+    let s14 = Stage {
+        la: set!(),
+        w:  w!(
+            so!(
+                so!(comp()),
+                so!(
+                    so!(
+                        so!(tense()),
+                        so!(
+                            so!(
+                                so!(light_verb()),
+                                so!(
+                                    so!(
+                                        so!(root()),
+                                        so!(object()),
+                                    )
+                                    => fvec![ "HELP", "me" ]; fset!( "help'", "me'" )
+                                ),
+                            ),
+                            so!(subject()),
+                        ),
+                    ),
+                    so!(subject()),
+                ),
+            )
+        )
+    };
+
+    //  Transfer CP.
+    let s15 = Stage {
+        la: set!(),
+        w:  w!(
+            so!(
+                so!(
+                    so!(comp()),
+                    so!(
+                        so!(
+                            so!(tense()),
+                            so!(
+                                so!(
+                                    so!(light_verb()),
+                                    so!(
+                                        so!(
+                                            so!(root()),
+                                            so!(object()),
+                                        )
+                                        => fvec![ "HELP", "me" ]; fset!( "help'", "me'" )
+                                    ),
+                                ),
+                                so!(subject()),
+                            ),
+                        ),
+                        so!(subject()),
+                    ),
+                )
+                => fvec![ "C", "she", "PAST", "v*", "HELP", "me" ]; fset!( "she'", "help'", "me'" )
+            )
+        )
+    };
+
     let stages = vec![
-        s1, s2, s3, s4, s5, s6
+        s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15
     ];
 
     eprintln!("Derivation? {}",
-        is_derivation(&il, &stages)
+        is_derivation::<BasicTriggers>(&il, &stages)
     );
 
     eprintln!("\n\n\n");
@@ -203,18 +463,13 @@ fn main() {
     for (k, stage) in stages.iter().enumerate() {
         eprintln!("========================================");
         eprintln!("Stage {}:", k+1);
-        eprintln!("Lexical array: {{ {} }}",
+        eprintln!("Lexical array: {{\n{}\n}}",
             stage.la.iter()
-                .map(|li| format!("{}", li))
-                .reduce(|a, b| format!("{}, {}", a, b))
-                .unwrap_or_else(|| format!(""))
-        );
-        eprintln!("Workspace: {{\n{}\n}}",
-            stage.w.iter()
-                .map(|so| format!("{}", so))
+                .map(|li| format!("    {}", li))
                 .reduce(|a, b| format!("{},\n{}", a, b))
                 .unwrap_or_else(|| format!(""))
         );
+        eprintln!("Workspace: {}", stage.w);
     }
 
     eprintln!("\n\n\n");
