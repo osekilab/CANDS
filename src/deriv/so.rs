@@ -228,19 +228,6 @@ impl SyntacticObject {
         Box::new(std::iter::empty())
     }
 
-    /*
-    ┌─┬─ this
-    │ └─┬─ person
-    │   └─┬─ Q
-    │     └─┬─ you
-    │       └─ know
-    └─┬─ Pres
-      └─┬─ v
-        └─┬─ wrote
-          └─┬─ this
-            └─ book
-    */
-
     /// Recursive function used by the `fmt::Display` implementation to pretty-print the current syntactic object.
     fn fmt_with_prefix(&self,
         prefix1: &str,
@@ -301,15 +288,15 @@ impl SyntacticObject {
             },
 
             &SyntacticObject::Transfer { ref so, ref pf, ref lf } => {
-                let pflf = format!(
-                    "PF: [{}]; LF: {{{}}}",
-                    pf.iter().map(|f| f.0.to_owned()).reduce(|a, b| format!("{} {}", a, b)).unwrap_or_else(|| format!("")),
-                    lf.iter().map(|f| f.0.to_owned()).reduce(|a, b| format!("{}, {}", a, b)).unwrap_or_else(|| format!(""))
-                );
-                let bars: String = std::iter::repeat("━").take(pflf.len() + 2).collect();
-                write!(f, "{}{}{}┓\n", prefix1, if first { " ┏" } else { "─┳" }, bars)?;
-                write!(f, "{} ┃ {} ┃\n", prefix2, pflf)?;
-                write!(f, "{} ┗{}┛{}", prefix2, bars, if newline { "\n" } else { "" })
+                const BORDER: &'static str = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
+                let newprefix1 = format!("{} ┃", prefix2);
+                let newprefix2 = format!("{} ┃", prefix2);
+                write!(f, "{}{}{}\n", prefix1, if first { " ┏" } else { "─┳" }, BORDER)?;
+                so.fmt_with_prefix(&newprefix1, &newprefix2, true, true, f)?;
+                write!(f, "{} ┣{}\n", prefix2, BORDER)?;
+                write!(f, "{} ┃ PF: [ {} ]\n", prefix2, pf.iter().map(|f| f.0.to_owned()).reduce(|a, b| format!("{} {}", a, b)).unwrap_or_else(|| format!("")))?;
+                write!(f, "{} ┃ LF: {{ {} }}\n", prefix2, lf.iter().map(|f| f.0.to_owned()).reduce(|a, b| format!("{}, {}", a, b)).unwrap_or_else(|| format!("")))?;
+                write!(f, "{} ┗{}{}", prefix2, BORDER, if newline { "\n" } else { "" })
             },
         }
     }
@@ -400,7 +387,7 @@ impl<'a> Iterator for ContainedSyntacticObjects<'a> {
                         }
                     },
                     &SyntacticObject::Transfer { ref so, .. } => {
-                        if self.pic_compliant {
+                        if !self.pic_compliant {
                             self.stack.push(so);
                         }
                     },

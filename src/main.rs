@@ -114,12 +114,12 @@ fn main() {
 
 
     //  Lexical item shorthands
-    let me = || li!( "me'" ; "D", "1", "sg", "acc"; "me");
-    let HELP = || li!( "help'" ; "V", "=D"; "HELP");
-    let strong_light_verb = || li!( ; "v*", "=V", "=D", "acc"; "v*");
-    let she = || li!( "she'" ; "D", "3", "sg", "nom"; "she");
-    let PAST = || li!( ; "T", "=v*", "epp", "nom"; "PAST");
-    let nullcomp = || li!( ; "C", "=T"; "C");
+    let me = || li!( "me'" ; "D", "1", "sg", "acc"; "me"; "me");
+    let HELP = || li!( "help'" ; "V", "=D"; "HELP"; "HELP");
+    let strong_light_verb = || li!( ; "v*", "=V", "=D", "acc"; "v*"; "v*");
+    let she = || li!( "she'" ; "D", "3", "sg", "nom"; "she"; "she");
+    let PAST = || li!( ; "T", "=v*", "epp", "nom"; "PAST"; "PAST");
+    let nullcomp = || li!( ; "C", "=T"; "C"; "C");
 
 
 

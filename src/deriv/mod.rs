@@ -152,7 +152,7 @@ impl<'a> Iterator for ContainedSyntacticObjects<'a> {
                         }
                     },
                     &SyntacticObject::Transfer { ref so, .. } => {
-                        if self.pic_compliant {
+                        if !self.pic_compliant {
                             self.stack.push(so);
                         }
                     },
