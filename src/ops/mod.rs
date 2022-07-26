@@ -138,12 +138,12 @@ fn transfer_pf<T: Triggers>(phase: &SyntacticObject, so: &SyntacticObject, w: &W
                     None
                 };
 
-            eprintln!("TransferPF: X1 =\n{}", x1);
-            eprintln!("TransferPF: Is X1 final? {}", x1.is_final(so, phase));
-            eprintln!("TransferPF: PF of X1 = {:?}", pf1);
-            eprintln!("TransferPF: X2 =\n{}", x2);
-            eprintln!("TransferPF: Is X2 final? {}", x2.is_final(so, phase));
-            eprintln!("TransferPF: PF of X2 = {:?}", pf2);
+            // eprintln!("TransferPF: X1 =\n{}", x1);
+            // eprintln!("TransferPF: Is X1 final? {}", x1.is_final(so, phase));
+            // eprintln!("TransferPF: PF of X1 = {:?}", pf1);
+            // eprintln!("TransferPF: X2 =\n{}", x2);
+            // eprintln!("TransferPF: Is X2 final? {}", x2.is_final(so, phase));
+            // eprintln!("TransferPF: PF of X2 = {:?}", pf2);
 
             match (pf1, pf2) {
                 (Some(mut pf1), Some(mut pf2)) => {
@@ -170,7 +170,7 @@ fn transfer_pf<T: Triggers>(phase: &SyntacticObject, so: &SyntacticObject, w: &W
         &SyntacticObject::Transfer { ref pf, .. } => pf.clone(),
     };
 
-    eprintln!("TransferPF: Result = {:?}", res);
+    // eprintln!("TransferPF: Result = {:?}", res);
     res
 }
 
@@ -198,8 +198,8 @@ fn transfer_lf(phase: &SyntacticObject, so: &SyntacticObject) -> Set<Feature> {
 
 
 pub fn transfer<T: Triggers>(phase: &SyntacticObject, so: SyntacticObject, w: &Workspace) -> SyntacticObject {
-    eprintln!("Transfer: We are trying to transfer SO =\n{}", so);
-    eprintln!("Transfer: In the phase\n{}", phase);
+    // eprintln!("Transfer: We are trying to transfer SO =\n{}", so);
+    // eprintln!("Transfer: In the phase\n{}", phase);
     let pf = transfer_pf::<T>(&phase, &so, w);
     let lf = transfer_lf(&phase, &so);
 
@@ -218,17 +218,17 @@ fn unwind_and_transfer<T: Triggers>(mut so: SyntacticObject, head: &SyntacticObj
         SyntacticObject::Set(ref vec) => {
             if vec.len() == 2 {
                 if vec[0].is_complement_of::<T>(&head, &so, w) {
-                    eprintln!("UnwindAndTransfer: This phase:\n{}", so);
-                    eprintln!("UnwindAndTransfer: Has the head:\n{}", head);
-                    eprintln!("UnwindAndTransfer: And the complement:\n{}", vec[0]);
-                    eprintln!("UnwindAndTransfer: Therefore, the complement will be transferred.");
+                    // eprintln!("UnwindAndTransfer: This phase:\n{}", so);
+                    // eprintln!("UnwindAndTransfer: Has the head:\n{}", head);
+                    // eprintln!("UnwindAndTransfer: And the complement:\n{}", vec[0]);
+                    // eprintln!("UnwindAndTransfer: Therefore, the complement will be transferred.");
                     Action::TransferFirst
                 }
                 else if vec[1].is_complement_of::<T>(&head, &so, w) {
-                    eprintln!("UnwindAndTransfer: This phase:\n{}", so);
-                    eprintln!("UnwindAndTransfer: Has the head:\n{}", head);
-                    eprintln!("UnwindAndTransfer: And the complement:\n{}", vec[1]);
-                    eprintln!("UnwindAndTransfer: Therefore, the complement will be transferred.");
+                    // eprintln!("UnwindAndTransfer: This phase:\n{}", so);
+                    // eprintln!("UnwindAndTransfer: Has the head:\n{}", head);
+                    // eprintln!("UnwindAndTransfer: And the complement:\n{}", vec[1]);
+                    // eprintln!("UnwindAndTransfer: Therefore, the complement will be transferred.");
                     Action::TransferSecond
                 }
                 else {

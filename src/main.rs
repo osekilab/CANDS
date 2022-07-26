@@ -109,8 +109,9 @@ use std::marker::PhantomData;
 
 
 fn main() {
-    env_logger::init();
-
+    let mut builder = env_logger::Builder::from_default_env()
+        .format_target(false)
+        .init();
 
 
     //  Lexical item shorthands
@@ -128,11 +129,11 @@ fn main() {
         me(), HELP(), strong_light_verb(), she(), PAST(), nullcomp()
     );
 
-    let ug = UniversalGrammar {
-        phon_f:     fset!("me", "HELP", "v*", "she", "PAST", "C"),
-        syn_f:      fset!("D", "V", "v*", "T", "C", "=D", "=V", "=v*", "=T", "1", "3", "sg", "nom", "acc", "epp"),
-        sem_f:      fset!("me'", "help'", "she'"),
-    };
+    let ug: UniversalGrammar::<BasicTriggers> = UniversalGrammar::new(
+        fset!("me", "HELP", "v*", "she", "PAST", "C"),
+        fset!("D", "V", "v*", "T", "C", "=D", "=V", "=v*", "=T", "1", "3", "sg", "nom", "acc", "epp"),
+        fset!("me'", "help'", "she'")
+    );
 
     let il = ILanguage { lex, ug };
 
@@ -454,22 +455,12 @@ fn main() {
         s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15
     ];
 
-    eprintln!("Derivation? {}",
-        is_derivation::<BasicTriggers>(&il, &stages)
-    );
-
-    eprintln!("\n\n\n");
-
-    for (k, stage) in stages.iter().enumerate() {
-        eprintln!("========================================");
-        eprintln!("Stage {}:", k+1);
-        eprintln!("Lexical array: {{\n{}\n}}",
-            stage.la.iter()
-                .map(|li| format!("    {}", li))
-                .reduce(|a, b| format!("{},\n{}", a, b))
-                .unwrap_or_else(|| format!(""))
-        );
-        eprintln!("Workspace: {}", stage.w);
+    my_trace!("Checking the derivation...");
+    if is_derivation::<BasicTriggers>(&il, &stages) {
+        my_trace!("Valid derivation.");
+    }
+    else {
+        my_error!("Invalid derivation.");
     }
 
     eprintln!("\n\n\n");

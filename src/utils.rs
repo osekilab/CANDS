@@ -1,5 +1,8 @@
 use std::collections::BTreeSet;
 
+use std::sync::{ Mutex };
+
+use once_cell::sync::{ Lazy };
 
 
 /// Type definition for convenience.
@@ -21,6 +24,74 @@ macro_rules! set {
 }
 
 pub(crate) use set; // https://stackoverflow.com/a/31749071
+
+
+
+/// Stack depth counter for logging macros.
+pub static LOG_STACK_DEPTH: Lazy<Mutex<usize>> = Lazy::new(|| Mutex::new(1));
+
+/// Increase the stack depth counter.
+/// 
+/// You should call this at the beginning of a function where one of the logging macros are used.
+macro_rules! inc {
+    () => { *crate::utils::LOG_STACK_DEPTH.lock().unwrap() += 1; };
+}
+
+pub(crate) use inc;
+
+/// Decrease the stack depth counter.
+/// 
+/// You should call this at the end of a function where one of the logging macros are used.
+macro_rules! dec {
+    () => { *crate::utils::LOG_STACK_DEPTH.lock().unwrap() -= 1; };
+}
+
+pub(crate) use dec;
+
+/// Wrapper around the `log::trace` macro.
+macro_rules! my_trace {
+    ( $($e:expr),*) => {
+        let s = format!($($e),*);
+        for line in s.lines() {
+            log::trace!("{} {}", std::iter::repeat(">").take(*crate::utils::LOG_STACK_DEPTH.lock().unwrap()).collect::<String>(), line);
+        }
+    };
+}
+
+/// Wrapper around the `log::debug` macro.
+macro_rules! my_debug {
+    ( $($e:expr),*) => {
+        let s = format!($($e),*);
+        for line in s.lines() {
+            log::debug!("{} {}", std::iter::repeat(">").take(*crate::utils::LOG_STACK_DEPTH.lock().unwrap()).collect::<String>(), line);
+        }
+    };
+}
+
+/// Wrapper around the `log::info` macro.
+macro_rules! my_info {
+    ($($e:expr),*) => {
+        let s = format!($($e),*);
+        for line in s.lines() {
+            log::info!("{} {}", std::iter::repeat(">").take(*crate::utils::LOG_STACK_DEPTH.lock().unwrap()).collect::<String>(), line);
+        }
+    };
+}
+
+/// Wrapper around the `log::error` macro.
+macro_rules! my_error {
+    ($($e:expr),*) => {
+        let s = format!($($e),*);
+        for line in s.lines() {
+            log::error!("{} {}", std::iter::repeat(">").take(*crate::utils::LOG_STACK_DEPTH.lock().unwrap()).collect::<String>(), line);
+        }
+    };
+}
+
+pub(crate) use my_trace;
+pub(crate) use my_debug;
+pub(crate) use my_info;
+pub(crate) use my_error;
 
 
 

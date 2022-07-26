@@ -11,7 +11,10 @@
 //  Why pub(crate) not pub?
 //  https://stackoverflow.com/a/41667202
 
-pub(crate) use crate::utils::{ Set, set };
+pub(crate) use crate::utils::{
+    Set, set,
+    inc, dec, my_trace, my_debug, my_info, my_error,
+};
 pub(crate) use crate::feature::{
     Feature, f, fset, fvec,
     wh_feature,
@@ -25,7 +28,6 @@ pub(crate) use crate::deriv::{
     UniversalGrammar, ILanguage, Stage, is_derivation, Workspace, w,
     li::{ LexicalItem, li },
     lit::{ LexicalItemToken, lit },
-    so::{ SyntacticObject, ContainedSyntacticObjects, so },
-    occur::{ Occurrence },
+    so::{ SyntacticObject, ContainedSyntacticObjects, SOPrefixFormatter, so },
 };
 pub(crate) use crate::labels::{ Triggers, BasicTriggers };

@@ -223,11 +223,6 @@ impl SyntacticObject {
         it
     }
 
-    /// Return an iterator over all the occurrences contained in `self`.
-    pub fn iter_contained_as_occ(&self) -> Box<dyn Iterator<Item = &Occurrence<'_>> + '_> {
-        Box::new(std::iter::empty())
-    }
-
     /// Recursive function used by the `fmt::Display` implementation to pretty-print the current syntactic object.
     fn fmt_with_prefix(&self,
         prefix1: &str,
@@ -288,7 +283,7 @@ impl SyntacticObject {
             },
 
             &SyntacticObject::Transfer { ref so, ref pf, ref lf } => {
-                const BORDER: &'static str = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
+                const BORDER: &'static str = "━━━━━━━━━━━━━━━━━━━━";
                 let newprefix1 = format!("{} ┃", prefix2);
                 let newprefix2 = format!("{} ┃", prefix2);
                 write!(f, "{}{}{}\n", prefix1, if first { " ┏" } else { "─┳" }, BORDER)?;
@@ -396,6 +391,39 @@ impl<'a> Iterator for ContainedSyntacticObjects<'a> {
 
                 so
             })
+    }
+}
+
+
+
+#[derive(Debug)]
+pub struct SOPrefixFormatter<'a> {
+    so: &'a SyntacticObject,
+    spaces: String,
+}
+
+
+
+impl<'a> SOPrefixFormatter<'a> {
+    pub fn new(so: &'a SyntacticObject, num_spaces: usize) -> Self {
+        Self {
+            so,
+            spaces: std::iter::repeat(" ").take(num_spaces).collect::<String>(),
+        }
+    }
+}
+
+
+
+impl<'a> fmt::Display for SOPrefixFormatter<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.so.fmt_with_prefix(
+            "",
+            &self.spaces,
+            false,
+            true,
+            f
+        )
     }
 }
 
