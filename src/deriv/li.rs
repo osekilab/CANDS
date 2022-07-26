@@ -19,7 +19,7 @@ pub struct LexicalItem {
     pub syn: Set<Feature>,
 
     /// Phonological features.
-    pub phon: Set<Feature>,
+    pub phon: Vec<Feature>,
 
     /// Optional shorthand.
     shorthand: Option<String>,
@@ -31,7 +31,7 @@ impl LexicalItem {
     pub fn new(
         sem: Set<Feature>,
         syn: Set<Feature>,
-        phon: Set<Feature>,
+        phon: Vec<Feature>,
         shorthand: Option<String>,
     ) -> Self {
         Self { sem, syn, phon, shorthand }
@@ -102,7 +102,7 @@ macro_rules! li {
         LexicalItem::new(
             fset!($($sem),*),
             fset!($($syn),*),
-            fset!($($phon),*),
+            fvec!($($phon),*),
             None
         )
     };
@@ -111,7 +111,7 @@ macro_rules! li {
         LexicalItem::new(
             fset!($($sem),*),
             fset!($($syn),*),
-            fset!($($phon),*),
+            fvec!($($phon),*),
             Some(String::from($shorthand))
         )
     };
@@ -120,7 +120,7 @@ macro_rules! li {
         LexicalItem::new(
             fset!(),
             fset!(),
-            fset!(),
+            fvec!(),
             Some(String::from($shorthand))
         )
     };

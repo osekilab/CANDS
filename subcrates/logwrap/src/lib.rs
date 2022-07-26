@@ -12,7 +12,7 @@ pub fn logwrap(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut wrapper = orig.clone();
 
     //  Change original function name from `<func>` to `__logwrap_internal_<func>`
-    let wrapped_ident = format_ident!("__logwrap_internal__{}", orig.sig.ident);
+    let wrapped_ident = format_ident!("__logwrap_internal_{}", orig.sig.ident);
     wrapped.sig.ident = wrapped_ident.clone();
 
     //  Does the original function have a `self` receiver?
@@ -20,20 +20,18 @@ pub fn logwrap(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     //  Get the list of arguments.
     let args: Vec<Ident> = wrapper.sig.inputs.iter()
-        .map(|fn_arg| match fn_arg {
+        .filter_map(|fn_arg| match fn_arg {
             &FnArg::Receiver(_) => None,
             &FnArg::Typed(ref pat_type) => match *(pat_type.pat) {
                 Pat::Ident(ref pat_ident) => Some(pat_ident.ident.clone()),
                 _ => None,
             }
         })
-        .filter(Option::is_some)
-        .map(Option::unwrap)
         .collect();
 
     //  Get the list of generics.
     let generics: Vec<Box<dyn ToTokens>> = wrapper.sig.generics.params.iter()
-        .map(|generic_param| match generic_param {
+        .filter_map(|generic_param| match generic_param {
             &GenericParam::Type(ref ty) =>
                 Some(Box::new(ty.ident.clone()) as Box<dyn ToTokens>),
 
@@ -42,8 +40,6 @@ pub fn logwrap(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
             _ => None,
         })
-        .filter(Option::is_some)
-        .map(Option::unwrap)
         .collect();
 
     //  Change wrapper code.

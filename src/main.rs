@@ -99,6 +99,7 @@ mod ops;
 mod deriv;
 mod prelude;
 mod labels;
+mod cli;
 
 
 
@@ -109,6 +110,16 @@ use std::marker::PhantomData;
 
 
 fn main() {
+    let mut builder = env_logger::Builder::from_default_env()
+        .format_target(false)
+        .init();
+
+    cli::run();
+}
+
+
+
+fn main2() {
     let mut builder = env_logger::Builder::from_default_env()
         .format_target(false)
         .init();

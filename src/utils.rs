@@ -28,7 +28,7 @@ pub(crate) use set; // https://stackoverflow.com/a/31749071
 
 
 /// Stack depth counter for logging macros.
-pub static LOG_STACK_DEPTH: Lazy<Mutex<usize>> = Lazy::new(|| Mutex::new(1));
+pub static LOG_STACK_DEPTH: Lazy<Mutex<usize>> = Lazy::new(|| Mutex::new(0));
 
 /// Increase the stack depth counter.
 /// 
