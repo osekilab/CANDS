@@ -43,7 +43,7 @@ pub fn token_based_merge(a: SyntacticObject, b: SyntacticObject, _w: &Workspace)
         );
     }
 
-    let pair = vec![ a, b ];
+    let pair = set!( a, b );
     Ok(SyntacticObject::Set(pair))
 }
 
@@ -86,7 +86,7 @@ pub fn triggered_merge<T: Triggers>(a: SyntacticObject, b: SyntacticObject, w: &
     }
     // eprintln!("Triggered Merge: So far so good. Triggers(B) = {:?}", tfs_b);
 
-    let pair = vec![ a, b ];
+    let pair = set!( a, b );
     Ok(SyntacticObject::Set(pair))
 }
 
@@ -116,11 +116,13 @@ fn transfer_pf<T: Triggers>(phase: &SyntacticObject, so: &SyntacticObject, w: &W
         &SyntacticObject::LexicalItemToken(ref lit) =>
             lit.li.phon.iter().map(|f| f.clone()).collect::<Vec<_>>(),
 
-        &SyntacticObject::Set(ref vec) => {
-            assert!(vec.len() == 2); // todo: don't assert, return Result
+        &SyntacticObject::Set(ref set) => {
+            assert!(set.len() == 2); // todo: don't assert, return Result
 
-            let x1 = &vec[0];
-            let x2 = &vec[1];
+            let mut it = set.iter();
+
+            let x1 = it.next().unwrap();
+            let x2 = it.next().unwrap();
 
             let mut pf1 = 
                 if x1.is_final(so, phase) {
@@ -215,16 +217,21 @@ fn unwind_and_transfer<T: Triggers>(mut so: SyntacticObject, head: &SyntacticObj
 
     //  First, figure out what we should do
     let action = match so {
-        SyntacticObject::Set(ref vec) => {
-            if vec.len() == 2 {
-                if vec[0].is_complement_of::<T>(&head, &so, w) {
+        SyntacticObject::Set(ref set) => {
+            if set.len() == 2 {
+                let mut it = set.iter();
+                
+                let x0 = it.next().unwrap();
+                let x1 = it.next().unwrap();
+
+                if x0.is_complement_of::<T>(&head, &so, w) {
                     // eprintln!("UnwindAndTransfer: This phase:\n{}", so);
                     // eprintln!("UnwindAndTransfer: Has the head:\n{}", head);
                     // eprintln!("UnwindAndTransfer: And the complement:\n{}", vec[0]);
                     // eprintln!("UnwindAndTransfer: Therefore, the complement will be transferred.");
                     Action::TransferFirst
                 }
-                else if vec[1].is_complement_of::<T>(&head, &so, w) {
+                else if x1.is_complement_of::<T>(&head, &so, w) {
                     // eprintln!("UnwindAndTransfer: This phase:\n{}", so);
                     // eprintln!("UnwindAndTransfer: Has the head:\n{}", head);
                     // eprintln!("UnwindAndTransfer: And the complement:\n{}", vec[1]);
@@ -247,7 +254,7 @@ fn unwind_and_transfer<T: Triggers>(mut so: SyntacticObject, head: &SyntacticObj
         Action::Return => Err(so),
         Action::Unwind => {
             if let SyntacticObject::Set(vec) = so {
-                let (vec, is_ok) = vec.into_iter()
+                let (set, is_ok) = vec.into_iter()
                     .map(|so| {
                         match unwind_and_transfer::<T>(so, head, w) {
                             Ok(so) => (so, true),
@@ -255,16 +262,16 @@ fn unwind_and_transfer<T: Triggers>(mut so: SyntacticObject, head: &SyntacticObj
                         }
                     })
                     .fold(
-                        (vec![], false),
-                        |(mut acc, is_ok1), (so, is_ok2)| {
-                            acc.push(so);
-                            (acc, is_ok1 || is_ok2)
+                        (set!(), false),
+                        |(mut set, is_ok1), (so, is_ok2)| {
+                            set.insert(so);
+                            (set, is_ok1 || is_ok2)
                         }
                     );
 
                 match is_ok {
-                    true => Ok(SyntacticObject::Set(vec)),
-                    false => Err(SyntacticObject::Set(vec)),
+                    true => Ok(SyntacticObject::Set(set)),
+                    false => Err(SyntacticObject::Set(set)),
                 }
             }
             else {
@@ -273,13 +280,14 @@ fn unwind_and_transfer<T: Triggers>(mut so: SyntacticObject, head: &SyntacticObj
         },
 
         _ => {
-            if let SyntacticObject::Set(ref mut vec) = so {
-                let x1 = vec[0].clone();
-                let x2 = vec[1].clone();
+            if let SyntacticObject::Set(ref set) = so {
+                let mut it = set.iter();
+                let x1 = it.next().unwrap().clone();
+                let x2 = it.next().unwrap().clone();
     
                 Ok(SyntacticObject::Set(match action {
-                    Action::TransferFirst => vec![ transfer::<T>(&so, x1, w), x2 ],
-                    Action::TransferSecond => vec![ x1, transfer::<T>(&so, x2, w) ],
+                    Action::TransferFirst => set!( transfer::<T>(&so, x1, w), x2 ),
+                    Action::TransferSecond => set!( x1, transfer::<T>(&so, x2, w) ),
                     _ => panic!(),
                 }))
             }

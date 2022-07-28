@@ -106,15 +106,34 @@ mod cli;
 use prelude::*;
 
 use std::marker::PhantomData;
+use std::path::{ Path, PathBuf };
+
+use clap::Parser;
+
+
+
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+struct Args {
+    #[clap(value_parser)]
+    file_path: Option<PathBuf>,
+}
 
 
 
 fn main() {
+    std::env::set_var("RUST_LOG", "info");
+
     let mut builder = env_logger::Builder::from_default_env()
         .format_target(false)
         .init();
 
-    cli::run();
+    let args = Args::parse();
+
+    match args.file_path {
+        Some(ref file_path) => cli::run_file(file_path),
+        None => cli::run_stdin(),
+    };
 }
 
 

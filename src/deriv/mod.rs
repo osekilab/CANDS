@@ -18,6 +18,7 @@ use std::fmt;
 /// From Definition 1 in C&S 2016, p. 44.
 /// 
 /// >Universal Grammar is a 6-tuple: $\\langle \\textrm{PHON-F}, \\textrm{SYN-F}, \\textrm{SEM-F}, \\textrm{Select}, \\textrm{Merge}, \\textrm{Transfer} \\rangle$.
+#[derive(Debug)]
 pub struct UniversalGrammar<T: Triggers> {
     pub phon_f:     Set<Feature>,
     pub syn_f:      Set<Feature>,

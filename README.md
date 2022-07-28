@@ -2,7 +2,7 @@
 
 Implementation of Collins and Stabler 2016: "A Formalization of Minimalist Syntax", Syntax 19:1, pp. 43--78.
 
-# For users
+# Build and run
 
 1.  This program is written in [Rust](https://www.rust-lang.org/). To build and run `cands`, you first need to install `rustup`, the Rust toolchain installer. Follow the steps [here](https://rustup.rs/).
 
@@ -23,6 +23,10 @@ Implementation of Collins and Stabler 2016: "A Formalization of Minimalist Synta
     ```
     cargo run
     ```
+
+# User docs
+
+See [here](userdocs.md) for more info.
 
 # Developer docs
 

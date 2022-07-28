@@ -18,7 +18,7 @@ pub enum SyntacticObject {
     LexicalItemToken(LexicalItemToken),
     //  There is no pattern for CyclicTransfer! This is because CyclicTransfer is an operation and not a kind of syntactic object.
     //  CyclicTransfer(Box<SyntacticObject>),
-    Set(Vec<SyntacticObject>),
+    Set(Set<SyntacticObject>),
     //  We include this for convenience, but this is technically not a syntactic object in C&S.
     Transfer {
         so: Box<SyntacticObject>,
@@ -84,7 +84,7 @@ macro_rules! so {
     };
 
     ($($so:expr,)*) => {
-        SyntacticObject::Set(vec!($($so),*))
+        SyntacticObject::Set(set!($($so),*))
     };
 
     ($lit:expr) => {

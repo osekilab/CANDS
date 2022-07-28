@@ -25,7 +25,7 @@ pub(crate) use crate::feature::{
 };
 pub(crate) use crate::ops::{ select, token_based_merge, triggered_merge, is_strong_phase, transfer, cyclic_transfer };
 pub(crate) use crate::deriv::{
-    UniversalGrammar, ILanguage, Stage, is_derivation, Workspace, w,
+    Lexicon, UniversalGrammar, ILanguage, Stage, is_derivation, Workspace, w,
     li::{ LexicalItem, li },
     lit::{ LexicalItemToken, lit },
     so::{ SyntacticObject, ContainedSyntacticObjects, SOPrefixFormatter, so },

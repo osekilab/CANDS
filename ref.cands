@@ -1,0 +1,117 @@
+#   Hashtag starts a line comment.
+#   Angles brackets denote tuples. Elements can have different types.
+#   Regular brackets denote vectors. Elements must have the same type.
+#   Braces denote sets. Elements must have the same type.
+
+
+
+#   Type conversions:
+#
+#   FSet         := Set<Feature>
+#   FVec         := Vec<Feature>
+#   Li           := < FSet, FSet, FVec >
+#   Lit          := < Li, usize >
+#   LexicalArray := Set<Lit>
+#   SO           := rec ( t. Lit + Set<t> + < t, FVec, FSet > )
+#       but the set of children is underlyingly represented as a Vec!
+#
+#   Workspace    := Set<SO>
+#   Stage        := < LexicalArray, Workspace >
+
+
+
+#   You must provide sem, syn, phon.
+let me:   Li = < { "me'" }   , { "D" }               , [ "me" ]   >;
+let HELP: Li = < { "help'" } , { "V", "=D" }         , [ "HELP" ] >;
+let v:    Li = < {}          , { "v*", "=V", "=D" }  , [ "v*" ]   >;
+let she:  Li = < { "she'" }  , { "D" }               , [ "she" ]  >;
+let PAST: Li = < {}          , { "T", "=v*", "epp" } , [ "PAST" ] >;
+let C:    Li = < {}          , { "C", "=T" }         , [ "C" ]    >;
+
+
+
+set lex = { me, HELP, v, she, PAST, C };
+
+
+
+set ug = <
+    { "me", "HELP", "v*", "she", "PAST", "C" },
+    { "D", "V", "v*", "T", "C", "=D", "=V", "=v*", "=T", "epp" },
+    { "me'", "help'", "she'" }
+>;
+
+
+
+init;
+
+
+
+let me1:   Lit = < me,   1 >;
+let HELP1: Lit = < HELP, 1 >;
+let v1:    Lit = < v,    1 >;
+let she1:  Lit = < she,  1 >;
+let PAST1: Lit = < PAST, 1 >;
+let C1:    Lit = < C,    1 >;
+
+
+
+let S1: Stage = <
+    { me1, HELP1, v1, she1 },
+    {}
+>;
+
+let S2: Stage = <
+    { HELP1, v1, she1 },
+    { me1 }
+>;
+
+check [ S1, S2 ];
+
+
+
+let S3: Stage = <
+    { v1, she1 },
+    { me1, HELP1 }
+>;
+
+let S4: Stage = <
+    { v1, she1 },
+    { { me1, HELP1 } }
+>;
+
+check [ S1, S2, S3, S4 ];
+
+
+
+let S5: Stage = <
+    { she1 },
+    { v1, { me1, HELP1 } }
+>;
+
+let S6: Stage = <
+    { she1 },
+    { { v1, { me1, HELP1 } } }
+>;
+
+let S7: Stage = <
+    {},
+    { she1, { v1, { me1, HELP1 } } }
+>;
+
+let S8: Stage = <
+    {},
+    { { { v1, { me1, HELP1 } }, she1 } }
+>;
+
+let S1to8: [Stage] = [ S1, S2, S3, S4, S5, S6, S7, S8 ];
+
+check S1to8;
+
+
+
+let S9: Stage = <
+    {},
+    { { { v1, < { me1, HELP1 }, [ "HELP", "me" ], { "help'", "me'" } > }, she1 } }
+>;
+
+check [ S1, S2, S3, S4, S5, S6, S7, S8, S9 ];

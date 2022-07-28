@@ -23,7 +23,7 @@ use std::error::Error;
 
 
 
-type FileId = usize;
+type FileId = ();
 pub type Span<'a> = LocatedSpan<&'a str, FileId>;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -34,7 +34,15 @@ pub enum Context {
     TupleType, TupleTypeLeft, TupleTypeRight,
     LexicalItemType,
     LexicalItemTokenType,
+    //  Transferred SO should not have a dedicated type keyword
+    LexiconType,
+    UniversalGrammarType,
+    LexicalArrayType,
+    WorkspaceType,
+    StageType,
+    DerivationType,
     UsizeType,
+    SOType,
     Type,
 
     Feature,
@@ -42,12 +50,18 @@ pub enum Context {
     Set, SetLeft, SetRight,
     Tuple, TupleLeft, TupleRight,
     Usize,
-    Value,
+    Value, Var,
+    Expr,
 
     Id,
 
     Let, LetLet, LetColon, LetEquals, LetSemicolon,
+    SetStmt, SetSet, SetEquals, SetSemicolon,
+    Init, InitInit, InitSemicolon,
+    Check, CheckCheck, CheckSemicolon,
     Statement,
+
+    Comment,
 }
 
 pub type SpanContextErrorTree<'a> = GenericErrorTree<Span<'a>, Span<'a>, Context, Box<dyn Error + Send + Sync + 'static>>;
@@ -59,9 +73,9 @@ fn make_message(is_fail: bool, stack_ctx: &StackContext<Context>) -> Option<Stri
         StackContext::Context(ref ctx) => Some(
             format!(
                 "{} {}",
-                if is_fail { "Failed to parse" } else { "Tried to parse this" },
+                if is_fail { "Failed to parse" } else { "Tried to parse this as" },
                 match ctx {
-                    Context::FeatureType => "the type keyword `Feature`",
+                    Context::FeatureType => "the type keyword `Feature`, or `F`",
                     Context::VecType => "a vector type",
                     Context::VecTypeLeft => "a left bracket (\'[\')",
                     Context::VecTypeRight => "a right bracket (\']\')",
@@ -73,7 +87,14 @@ fn make_message(is_fail: bool, stack_ctx: &StackContext<Context>) -> Option<Stri
                     Context::TupleTypeRight => "a greater-than sign (\'>\')",
                     Context::LexicalItemType => "the type keyword `Li`",
                     Context::LexicalItemTokenType => "the type keyword `Lit`",
+                    Context::LexiconType => "the type keyword `Lex`",
+                    Context::UniversalGrammarType => "the type keyword `UG`",
+                    Context::LexicalArrayType => "the type keyword `La`",
+                    Context::WorkspaceType => "the type keyword `Wksp`",
+                    Context::StageType => "the type keyword `Stage`",
+                    Context::DerivationType => "the type keyword `Deriv`",
                     Context::UsizeType => "the type keyword `usize`",
+                    Context::SOType => "the type keyword `SO`",
                     Context::Type => "type annotation",
 
                     Context::Feature => "a feature",
@@ -88,6 +109,8 @@ fn make_message(is_fail: bool, stack_ctx: &StackContext<Context>) -> Option<Stri
                     Context::TupleRight => "a greater-than sign (\'>\')",
                     Context::Usize => "a `usize`",
                     Context::Value => "a value",
+                    Context::Var => "a variable",
+                    Context::Expr => "an expression",
 
                     Context::Id => "an identifier",
 
@@ -97,7 +120,22 @@ fn make_message(is_fail: bool, stack_ctx: &StackContext<Context>) -> Option<Stri
                     Context::LetEquals => "an equals sign (\'=\')",
                     Context::LetSemicolon => "a semicolon (\';\')",
 
+                    Context::SetStmt => "a set statement",
+                    Context::SetSet => "the keyword `set`",
+                    Context::SetEquals => "an equals sign (\'=\')",
+                    Context::SetSemicolon => "a semicolon (\';\')",
+
+                    Context::Init => "an init statement",
+                    Context::InitInit => "the keyword `init`",
+                    Context::InitSemicolon => "a semicolon (\';\')",
+
+                    Context::Check => "a check statement",
+                    Context::CheckCheck => "the keyword `check`",
+                    Context::CheckSemicolon => "a semicolon (\';\')",
+
                     Context::Statement => "a statement",
+
+                    Context::Comment => "a comment",
                 }
             )
         ),

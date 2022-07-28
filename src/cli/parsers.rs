@@ -1,14 +1,18 @@
-use super::{ Type };
 use super::errors::{ self, Span, Context, SpanContextErrorTree };
+use super::{ Type, LEXICAL_ITEM_TYPE, LEXICAL_ITEM_TOKEN_TYPE, LEXICON_TYPE,
+    UNIVERSAL_GRAMMAR_TYPE, LEXICAL_ARRAY_TYPE, WORKSPACE_TYPE, STAGE_TYPE,
+    DERIVATION_TYPE };
 
-use codespan_reporting::files::{ SimpleFiles };
+use codespan_reporting::files::{ SimpleFile };
 use codespan_reporting::diagnostic::{ Diagnostic, Label };
 use codespan_reporting::term::{ self, termcolor::{ ColorChoice, StandardStream }};
 
 use nom::{ Finish, Parser, IResult };
 use nom::branch::{ alt };
 use nom::bytes::complete::{ tag };
-use nom::character::complete::{ alpha1, alphanumeric0, multispace0, one_of, digit1 };
+use nom::character::complete::{ alpha1, alphanumeric0, multispace0, not_line_ending, one_of, digit1 };
+use nom::combinator::{ eof, map };
+use nom::error::{ Error as NomError };
 use nom::multi::{ many0, many1, separated_list0 };
 use nom::sequence::{ preceded };
 
@@ -22,24 +26,24 @@ use paste::paste;
 
 use std::error::Error;
 use std::str::FromStr;
+use std::path::Path;
 
 
 
 //  Internal value representation.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Value {
     Feature(String),
-    Vec(Vec<Value>),
-    Set(Vec<Value>),
-    Tuple(Vec<Value>),
+    Vec(Vec<Expr>),
+    Set(Vec<Expr>),
+    Tuple(Vec<Expr>),
     Usize(usize),
-    //  Does anything about SO go here?
 }
 
 
 
 //  Internal expression representation.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expr {
     Value(Value),
     Var(String),
@@ -48,9 +52,12 @@ pub enum Expr {
 
 
 //  Internal statement representation.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Statement {
-    Let(String, Type, Value),
+    Let(String, Type, Expr),
+    Set(String, Expr),
+    Init,
+    Check(Expr),
 }
 
 
@@ -73,21 +80,27 @@ macro_rules! parser_with_ctx {
 
 /// Parse an identifier.
 fn id(s: Span) -> IResult<Span, String, SpanContextErrorTree> {
-    let (s, first) = alpha1
-        .context(Context::Id)
-        .parse(s)?;
+    let (s, first) =
+        many1(
+            one_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_")
+        )
+            .context(Context::Id)
+            .parse(s)?;
 
-    let (s, second) = alphanumeric0
-        .context(Context::Id)
-        .parse(s)?;
+    let (s, second) = 
+        many0(
+            one_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_")
+        )
+            .context(Context::Id)
+            .parse(s)?;
 
-    Ok((s, format!("{}{}", first, second)))
+    Ok((s, format!("{}{}", first.iter().collect::<String>(), second.iter().collect::<String>())))
 }
 
 
 
 fn feature_type(s: Span) -> IResult<Span, Type, SpanContextErrorTree> {
-    let (s, _) = tag("Feature")
+    let (s, _) = alt((tag("Feature"), tag("F")))
         .context(Context::FeatureType)
         .parse(s)?;
 
@@ -111,7 +124,7 @@ fn lexical_item_token_type(s: Span) -> IResult<Span, Type, SpanContextErrorTree>
         .context(Context::LexicalItemTokenType)
         .parse(s)?;
 
-    Ok((s, super::LEXICAL_ITEM_TOKEN_TYPE!()))
+    Ok((s, LEXICAL_ITEM_TOKEN_TYPE!()))
 }
 
 
@@ -121,7 +134,77 @@ fn lexical_item_type(s: Span) -> IResult<Span, Type, SpanContextErrorTree> {
         .context(Context::LexicalItemType)
         .parse(s)?;
 
-    Ok((s, super::LEXICAL_ITEM_TYPE!()))
+    Ok((s, LEXICAL_ITEM_TYPE!()))
+}
+
+
+
+fn lexicon_type(s: Span) -> IResult<Span, Type, SpanContextErrorTree> {
+    let (s, _) = tag("Lex")
+        .context(Context::LexiconType)
+        .parse(s)?;
+
+    Ok((s, LEXICON_TYPE!()))
+}
+
+
+
+fn universal_grammar_type(s: Span) -> IResult<Span, Type, SpanContextErrorTree> {
+    let (s, _) = tag("UG")
+        .context(Context::UniversalGrammarType)
+        .parse(s)?;
+
+    Ok((s, UNIVERSAL_GRAMMAR_TYPE!()))
+}
+
+
+
+fn lexical_array_type(s: Span) -> IResult<Span, Type, SpanContextErrorTree> {
+    let (s, _) = tag("La")
+        .context(Context::LexicalArrayType)
+        .parse(s)?;
+
+    Ok((s, LEXICAL_ARRAY_TYPE!()))
+}
+
+
+
+fn workspace_type(s: Span) -> IResult<Span, Type, SpanContextErrorTree> {
+    let (s, _) = tag("Wksp")
+        .context(Context::WorkspaceType)
+        .parse(s)?;
+
+    Ok((s, WORKSPACE_TYPE!()))
+}
+
+
+
+fn stage_type(s: Span) -> IResult<Span, Type, SpanContextErrorTree> {
+    let (s, _) = tag("Stage")
+        .context(Context::StageType)
+        .parse(s)?;
+
+    Ok((s, STAGE_TYPE!()))
+}
+
+
+
+fn derivation_type(s: Span) -> IResult<Span, Type, SpanContextErrorTree> {
+    let (s, _) = tag("Deriv")
+        .context(Context::DerivationType)
+        .parse(s)?;
+
+    Ok((s, DERIVATION_TYPE!()))
+}
+
+
+
+fn so_type(s: Span) -> IResult<Span, Type, SpanContextErrorTree> {
+    let (s, _) = tag("SO")
+        .context(Context::SOType)
+        .parse(s)?;
+
+    Ok((s, Type::SO))
 }
 
 
@@ -193,6 +276,13 @@ fn parse_type(s: Span) -> IResult<Span, Type, SpanContextErrorTree> {
         usize_type,
         lexical_item_token_type,
         lexical_item_type,
+        lexicon_type,
+        universal_grammar_type,
+        lexical_array_type,
+        workspace_type,
+        stage_type,
+        derivation_type,
+        so_type,
         vector_type,
         set_type,
         tuple_type,
@@ -205,12 +295,16 @@ fn parse_type(s: Span) -> IResult<Span, Type, SpanContextErrorTree> {
 
 /// Parse a feature.
 fn feature(s: Span) -> IResult<Span, Value, SpanContextErrorTree> {
+    let (s, _) = tag("\"").parse(s)?;
+
     let (s, feature) =
         many1(
             one_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890*=\'")
         )
             .context(Context::Feature)
             .parse(s)?;
+
+    let (s, _) = tag("\"").parse(s)?;
 
     Ok((s, Value::Feature(format!("{}", feature.iter().collect::<String>()))))
 }
@@ -233,9 +327,9 @@ parser_with_ctx! {
             .context(Context::VecLeft)
             .parse(s)?;
 
-        let (s, vals) = separated_list0(
+        let (s, exprs) = separated_list0(
             preceded(multispace0, tag(",")),
-            preceded(multispace0, value),
+            preceded(multispace0, expr),
         )
             .parse(s)?;
 
@@ -243,7 +337,7 @@ parser_with_ctx! {
             .context(Context::VecRight)
             .parse(s)?;
 
-        Ok((s, Value::Vec(vals)))
+        Ok((s, Value::Vec(exprs)))
     } .. Context::Vec
 }
 
@@ -255,9 +349,9 @@ parser_with_ctx! {
             .context(Context::SetLeft)
             .parse(s)?;
 
-        let (s, vals) = separated_list0(
+        let (s, exprs) = separated_list0(
             preceded(multispace0, tag(",")),
-            preceded(multispace0, value),
+            preceded(multispace0, expr),
         )
             .parse(s)?;
 
@@ -265,7 +359,7 @@ parser_with_ctx! {
             .context(Context::SetRight)
             .parse(s)?;
 
-        Ok((s, Value::Set(vals)))
+        Ok((s, Value::Set(exprs)))
     } .. Context::Set
 }
 
@@ -277,9 +371,9 @@ parser_with_ctx! {
             .context(Context::TupleLeft)
             .parse(s)?;
 
-        let (s, vals) = separated_list0(
+        let (s, exprs) = separated_list0(
             preceded(multispace0, tag(",")),
-            preceded(multispace0, value),
+            preceded(multispace0, expr),
         )
             .parse(s)?;
 
@@ -287,7 +381,7 @@ parser_with_ctx! {
             .context(Context::TupleRight)
             .parse(s)?;
 
-        Ok((s, Value::Tuple(vals)))
+        Ok((s, Value::Tuple(exprs)))
     } .. Context::Tuple
 }
 
@@ -307,9 +401,23 @@ fn value(s: Span) -> IResult<Span, Value, SpanContextErrorTree> {
 
 
 
+fn expr(s: Span) -> IResult<Span, Expr, SpanContextErrorTree> {
+    //  This parser will likely be more complex as we support binops/unops
+    let (s, expr) = alt((
+        map(id, |id| Expr::Var(id)).context(Context::Var),
+        map(value, |val| Expr::Value(val))
+    ))
+        .context(Context::Expr)
+        .parse(s)?;
+
+    Ok((s, expr))
+}
+
+
+
 parser_with_ctx! {
     fn parse_let(s: Span) -> IResult<Span, Statement, SpanContextErrorTree> {
-        let (s, _) = preceded(multispace0, tag("let"))
+        let (s, _) = tag("let")
             .context(Context::LetLet)
             .parse(s)?;
 
@@ -327,15 +435,76 @@ parser_with_ctx! {
             .context(Context::LetEquals)
             .parse(s)?;
 
-        let (s, val) = preceded(multispace0, value)
+        let (s, expr) = preceded(multispace0, expr)
             .parse(s)?;
 
         let (s, _) = preceded(multispace0, tag(";"))
             .context(Context::LetSemicolon)
             .parse(s)?;
 
-        Ok((s, Statement::Let(id, ty, val)))
+        Ok((s, Statement::Let(id, ty, expr)))
     } .. Context::Let
+}
+
+
+
+parser_with_ctx! {
+    fn parse_set(s: Span) -> IResult<Span, Statement, SpanContextErrorTree> {
+        let (s, _) = tag("set")
+            .context(Context::SetSet)
+            .parse(s)?;
+
+        let (s, id) = preceded(multispace0, id)
+            .parse(s)?;
+
+        let (s, _) = preceded(multispace0, tag("="))
+            .context(Context::SetEquals)
+            .parse(s)?;
+
+        let (s, expr) = preceded(multispace0, expr)
+            .parse(s)?;
+
+        let (s, _) = preceded(multispace0, tag(";"))
+            .context(Context::SetSemicolon)
+            .parse(s)?;
+
+        Ok((s, Statement::Set(id, expr)))
+    } .. Context::Set
+}
+
+
+
+parser_with_ctx! {
+    fn parse_init(s: Span) -> IResult<Span, Statement, SpanContextErrorTree> {
+        let (s, _) = tag("init")
+            .context(Context::InitInit)
+            .parse(s)?;
+
+        let (s, _) = preceded(multispace0, tag(";"))
+            .context(Context::InitSemicolon)
+            .parse(s)?;
+
+        Ok((s, Statement::Init))
+    } .. Context::Init
+}
+
+
+
+parser_with_ctx! {
+    fn parse_check(s: Span) -> IResult<Span, Statement, SpanContextErrorTree> {
+        let (s, _) = tag("check")
+            .context(Context::CheckCheck)
+            .parse(s)?;
+
+        let (s, expr) = preceded(multispace0, expr)
+            .parse(s)?;
+
+        let (s, _) = preceded(multispace0, tag(";"))
+            .context(Context::CheckSemicolon)
+            .parse(s)?;
+
+        Ok((s, Statement::Check(expr)))
+    } .. Context::Check
 }
 
 
@@ -343,7 +512,9 @@ parser_with_ctx! {
 fn statement(s: Span) -> IResult<Span, Statement, SpanContextErrorTree> {
     let (s, stmt) = alt((
         parse_let,
-        parse_let
+        parse_set,
+        parse_init,
+        parse_check
     )).context(Context::Statement).parse(s)?;
 
     Ok((s, stmt))
@@ -351,29 +522,95 @@ fn statement(s: Span) -> IResult<Span, Statement, SpanContextErrorTree> {
 
 
 
-pub fn parse(s: &str) -> Result<Statement, ()> {
-    let filename = format!("[stdin]");
-    let mut files = SimpleFiles::new();
-    let file_id = files.add(filename, s);
+fn comment(s: Span) -> IResult<Span, (), SpanContextErrorTree> {
+    let (s, _) = tag("#").context(Context::Comment).parse(s)?;
+    let (s, _) = not_line_ending.parse(s)?;
 
-    let span = Span::new_extra(s, file_id);
-    let res = statement(span).finish();
+    Ok((s, ()))
+}
 
-    match res {
-        Ok(res) => Ok(res.1),
-        Err(error) => {
-            // eprintln!("{:#?}", error);
 
-            let diags = errors::make_diagnostics(&error);
 
-            let writer = StandardStream::stderr(ColorChoice::Always);
-            let config = codespan_reporting::term::Config::default();
+fn line(s: Span) -> IResult<Span, Option<Statement>, SpanContextErrorTree> {
+    let (s, line) = alt((
+        map(statement, |stmt| Some(stmt)),
+        map(comment,   |_|    None)
+    )).parse(s)?;
 
-            for diag in diags.iter() {
-                term::emit(&mut writer.lock(), &config, &files, diag).unwrap();
+    Ok((s, line))
+}
+
+
+
+pub struct Statements<'a> {
+    files: SimpleFile<String, &'a str>,
+    buffer: Span<'a>,
+}
+
+
+
+impl<'a> Statements<'a> {
+    pub fn make(s: &'a str, file_path: Option<&Path>) -> Self {
+        let files =
+            SimpleFile::new(
+                file_path
+                    .map(|path| path.display().to_string())
+                    .unwrap_or_else(|| format!("[stdin]")),
+                s
+            );
+
+        let file_id = ();
+        let buffer = Span::new_extra(s, file_id);
+
+        Self { files, buffer }
+    }
+}
+
+
+
+impl<'a> Iterator for Statements<'a> {
+    type Item = Statement;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut next_line = None;
+
+        while next_line.is_none() {
+            //  Consume as much whitespace as we can.
+            let s =
+                match multispace0::<Span, NomError<Span>>.parse(self.buffer) {
+                    Ok((s, _)) => s,
+                    //  If we fail here, something is wrong. The iterator ends here.
+                    _ => break,
+                };
+
+            //  Check if we are at EOF. If yes, the iterator ends here.
+            if let Ok(_) = eof::<Span, NomError<Span>>(s) {
+                break;
             }
 
-            Err(())
-        },
+            //  Otherwise, parse.
+            next_line = match line(s).finish() {
+                Ok((s, stmt)) => {
+                    //  Update buffer because we just parsed a line
+                    self.buffer = s;
+                    stmt
+                },
+
+                Err(error) => {
+                    let diags = errors::make_diagnostics(&error);
+
+                    let writer = StandardStream::stderr(ColorChoice::Always);
+                    let config = codespan_reporting::term::Config::default();
+
+                    for diag in diags.iter() {
+                        term::emit(&mut writer.lock(), &config, &self.files, diag).unwrap();
+                    }
+
+                    break
+                },
+            }
+        }
+
+        next_line
     }
 }

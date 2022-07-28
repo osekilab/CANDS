@@ -78,6 +78,7 @@ pub trait Triggers {
 
 
 
+#[derive(Debug)]
 pub struct BasicTriggers;
 
 
