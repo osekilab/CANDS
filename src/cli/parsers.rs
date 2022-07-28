@@ -9,8 +9,8 @@ use codespan_reporting::term::{ self, termcolor::{ ColorChoice, StandardStream }
 
 use nom::{ Finish, Parser, IResult };
 use nom::branch::{ alt };
-use nom::bytes::complete::{ tag };
-use nom::character::complete::{ alpha1, alphanumeric0, multispace0, not_line_ending, one_of, digit1 };
+use nom::bytes::streaming::{ tag };
+use nom::character::streaming::{ alpha1, alphanumeric0, multispace0, not_line_ending, one_of, digit1 };
 use nom::combinator::{ eof, map };
 use nom::error::{ Error as NomError };
 use nom::multi::{ many0, many1, separated_list0 };
@@ -531,7 +531,7 @@ fn comment(s: Span) -> IResult<Span, (), SpanContextErrorTree> {
 
 
 
-fn line(s: Span) -> IResult<Span, Option<Statement>, SpanContextErrorTree> {
+pub fn line(s: Span) -> IResult<Span, Option<Statement>, SpanContextErrorTree> {
     let (s, line) = alt((
         map(statement, |stmt| Some(stmt)),
         map(comment,   |_|    None)
@@ -545,6 +545,18 @@ fn line(s: Span) -> IResult<Span, Option<Statement>, SpanContextErrorTree> {
 pub struct Statements<'a> {
     files: SimpleFile<String, &'a str>,
     buffer: Span<'a>,
+}
+
+
+
+#[derive(Debug, Clone)]
+pub enum StatementsAction {
+    //  Statement
+    Statement(Statement),
+    //  Maybe a statement? Need more data to figure out
+    MaybeStatement,
+    //  Not a statement (EOF or syntax error)
+    NoStatement,
 }
 
 
@@ -564,20 +576,12 @@ impl<'a> Statements<'a> {
 
         Self { files, buffer }
     }
-}
 
-
-
-impl<'a> Iterator for Statements<'a> {
-    type Item = Statement;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let mut next_line = None;
-
-        while next_line.is_none() {
+    pub fn next(&mut self) -> StatementsAction {
+        loop {
             //  Consume as much whitespace as we can.
             let s =
-                match multispace0::<Span, NomError<Span>>.parse(self.buffer) {
+                match nom::character::complete::multispace0::<Span, NomError<Span>>.parse(self.buffer) {
                     Ok((s, _)) => s,
                     //  If we fail here, something is wrong. The iterator ends here.
                     _ => break,
@@ -589,14 +593,25 @@ impl<'a> Iterator for Statements<'a> {
             }
 
             //  Otherwise, parse.
-            next_line = match line(s).finish() {
-                Ok((s, stmt)) => {
+            match line(s) {
+                //  Parsed a statement, not a comment
+                Ok((s, Some(stmt))) => {
                     //  Update buffer because we just parsed a line
                     self.buffer = s;
-                    stmt
+                    return StatementsAction::Statement(stmt)
                 },
 
-                Err(error) => {
+                //  Parsed a comment
+                Ok((_, None)) => {},
+
+                //  Need more data
+                Err(nom::Err::Incomplete(_)) => {
+                    return StatementsAction::MaybeStatement
+                },
+
+                //  Parser error
+                Err(nom::Err::Error(error)) |
+                Err(nom::Err::Failure(error)) => {
                     let diags = errors::make_diagnostics(&error);
 
                     let writer = StandardStream::stderr(ColorChoice::Always);
@@ -611,6 +626,6 @@ impl<'a> Iterator for Statements<'a> {
             }
         }
 
-        next_line
+        StatementsAction::NoStatement
     }
 }

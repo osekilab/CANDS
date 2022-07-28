@@ -1,201 +1,8 @@
 pub mod errors;
 pub mod parsers;
-
-pub mod tyck {
-    use crate::prelude::*;
-
-    use super::{
-        Value,
-        Type, LEXICAL_ITEM_TOKEN_TYPE, TRANSFERRED_SO_TYPE,
-        parsers::{
-            Expr as RawExpr,
-            Value as RawValue,
-        }
-    };
-
-    use std::collections::{ HashMap };
-
-    //  Big to-do: add codespan support here???
-    //  The RawExpr and RawValues should probably have a codespan in them.
-
-    //  Tyck should be called for every let and set statement.
-    //  The user should see type error messages!
-
-    fn tyck_var(ty: Type, id: &str, map: &HashMap<String, (Type, Value)>) -> Result<(), ()> {
-        match map.get(id).map(|(var_ty, _)| *var_ty == ty) {
-            Some(true) => Ok(()),
-            _ => Err(()),
-        }
-    }
-
-    fn tyck_feature(expr: &RawExpr, map: &HashMap<String, (Type, Value)>) -> Result<(), ()> {
-        match expr {
-            &RawExpr::Value(RawValue::Feature(_)) => Ok(()),
-            &RawExpr::Var(ref id) => tyck_var(Type::Feature, id, map),
-            _ => Err(()),
-        }
-    }
-
-    fn tyck_vec(ty: &Type, expr: &RawExpr, map: &HashMap<String, (Type, Value)>) -> Result<(), ()> {
-        match expr {
-            &RawExpr::Value(RawValue::Vec(ref vals)) => {
-                vals.iter()
-                    .map(|expr| tyck(ty, expr, map))
-                    .fold(
-                        Ok(()),
-                        |res1, res2| {
-                            match (res1, res2) {
-                                (Ok(_), Ok(_)) => Ok(()),
-                                _ => Err(()),
-                            }
-                        }
-                    )
-            },
-
-            &RawExpr::Var(ref id) => tyck_var(Type::Vec(Box::new(ty.clone())), id, map),
-            _ => Err(()),
-        }
-    }
-
-    fn tyck_set(ty: &Type, expr: &RawExpr, map: &HashMap<String, (Type, Value)>) -> Result<(), ()> {
-        match expr {
-            &RawExpr::Value(RawValue::Set(ref vals)) => {
-                vals.iter()
-                    .map(|expr| tyck(ty, expr, map))
-                    .fold(
-                        Ok(()),
-                        |res1, res2| {
-                            match (res1, res2) {
-                                (Ok(_), Ok(_)) => Ok(()),
-                                _ => Err(()),
-                            }
-                        }
-                    )
-            },
-
-            &RawExpr::Var(ref id) => tyck_var(Type::Set(Box::new(ty.clone())), id, map),
-            _ => Err(()),
-        }
-    }
-
-    fn tyck_tuple(tys: &[Type], expr: &RawExpr, map: &HashMap<String, (Type, Value)>) -> Result<(), ()> {
-        match expr {
-            &RawExpr::Value(RawValue::Tuple(ref vals)) => {
-                if tys.len() != vals.len() {
-                    return Err(());
-                }
-
-                tys.iter()
-                    .zip(vals.iter())
-                    .map(|(ty, expr)| tyck(ty, expr, map))
-                    .fold(
-                        Ok(()),
-                        |res1, res2| {
-                            match (res1, res2) {
-                                (Ok(_), Ok(_)) => Ok(()),
-                                _ => Err(()),
-                            }
-                        }
-                    )
-            },
-
-            &RawExpr::Var(ref id) => tyck_var(Type::Tuple(tys.to_vec()), id, map),
-            _ => Err(()),
-        }
-    }
-
-    fn tyck_usize(expr: &RawExpr, map: &HashMap<String, (Type, Value)>) -> Result<(), ()> {
-        match expr {
-            &RawExpr::Value(RawValue::Usize(_)) => Ok(()),
-            &RawExpr::Var(ref id) => tyck_var(Type::Usize, id, map),
-            _ => Err(()),
-        }
-    }
-
-    fn tyck_so(expr: &RawExpr, map: &HashMap<String, (Type, Value)>) -> Result<(), ()> {
-        tyck(&LEXICAL_ITEM_TOKEN_TYPE!(), expr, map)
-            .or_else(|_| tyck(&Type::Set(Box::new(Type::SO)), expr, map))
-            .or_else(|_| tyck(&TRANSFERRED_SO_TYPE!(), expr, map))
-            .or_else(|_| {
-                match expr {
-                    &RawExpr::Var(ref id) =>
-                        tyck_var(Type::SO, id, map),
-                    _ => Err(()),
-                }
-            })
-    }
-
-    pub fn tyck(ty: &Type, expr: &RawExpr, map: &HashMap<String, (Type, Value)>) -> Result<(), ()> {
-        match ty {
-            Type::Feature => tyck_feature(expr, map),
-            Type::Vec(ty) => tyck_vec(ty, expr, map),
-            Type::Set(ty) => tyck_set(ty, expr, map),
-            Type::Tuple(tys) => tyck_tuple(tys, expr, map),
-            Type::Usize => tyck_usize(expr, map),
-            Type::SO => tyck_so(expr, map),
-        }
-    }
-}
-
-pub mod eval {
-    use crate::prelude::*;
-
-    use super::{
-        Value,
-        Type,
-        parsers::{
-            Expr as RawExpr,
-            Value as RawValue,
-        }
-    };
-
-    use std::collections::{ HashMap };
-
-    fn eval_exprs(exprs: Vec<RawExpr>, map: &HashMap<String, (Type, Value)>) -> Result<Vec<Value>, ()> {
-        exprs.into_iter()
-            .map(|expr| eval(expr, map))
-            .fold(
-                Ok(vec![]),
-                |vec, val| {
-                    vec.and_then(|mut vec| {
-                        val.map(|val| {
-                            vec.push(val);
-                            vec
-                        })
-                    })
-                }
-            )
-    }
-
-    fn eval_value(val: RawValue, map: &HashMap<String, (Type, Value)>) -> Result<Value, ()> {
-        match val {
-            RawValue::Feature(feature) =>
-                Ok(Value::Feature(Feature::new(feature))),
-
-            RawValue::Vec(exprs) =>
-                eval_exprs(exprs, map).map(Value::Vec),
-
-            RawValue::Set(exprs) =>
-                eval_exprs(exprs, map).map(Value::Set),
-
-            RawValue::Tuple(exprs) => 
-                eval_exprs(exprs, map).map(Value::Tuple),
-
-            RawValue::Usize(x) =>
-                Ok(Value::Usize(x)),
-        }
-    }
-
-    pub fn eval(expr: RawExpr, map: &HashMap<String, (Type, Value)>) -> Result<Value, ()> {
-        match expr {
-            RawExpr::Value(val) =>
-                eval_value(val, map),
-
-            RawExpr::Var(var) =>
-                map.get(&var).map(|(ty, val)| val).cloned().ok_or(()),
-        }
-    }
-}
+pub mod tyck;
+pub mod eval;
+pub mod conv;
 
 
 
@@ -207,7 +14,7 @@ use std::fs::{ File };
 use std::io::{ self, BufReader, Read, Write };
 use std::path::{ Path };
 
-use parsers::{ Expr, Statement };
+use parsers::{ Expr, Statement, StatementsAction };
 
 
 
@@ -356,221 +163,6 @@ pub enum Value {
     Set(Vec<Value>),
     Tuple(Vec<Value>),
     Usize(usize),
-}
-
-
-
-mod conv {
-    use crate::prelude::*;
-
-    use super::Value;
-
-    //  F
-    pub fn to_feature(val: Value) -> Result<Feature, ()> {
-        match val {
-            Value::Feature(f) => Ok(f),
-            _ => Err(()),
-        }
-    }
-
-    //  usize
-    pub fn to_usize(val: Value) -> Result<usize, ()> {
-        match val {
-            Value::Usize(x) => Ok(x),
-            _ => Err(()),
-        }
-    }
-
-    //  {T}
-    fn to_set<T: Ord, F: FnMut(Value) -> Result<T, ()>>(val: Value, f: F) -> Result<Set<T>, ()> {
-        match val {
-            Value::Set(vals) => {
-                vals.into_iter()
-                    .map(f)
-                    .fold(
-                        Ok(set!()),
-                        |set, x| {
-                            set.and_then(|mut set| {
-                                x.map(|x| {
-                                    set.insert(x);
-                                    set
-                                })
-                            })
-                        }
-                    )
-            },
-
-            _ => Err(()),
-        }
-    }
-
-    //  [T]
-    fn to_vec<T, F: FnMut(Value) -> Result<T, ()>>(val: Value, f: F) -> Result<Vec<T>, ()> {
-        match val {
-            Value::Vec(vals) => {
-                vals.into_iter()
-                    .map(f)
-                    .fold(
-                        Ok(vec![]),
-                        |vec, x| {
-                            vec.and_then(|mut vec| {
-                                x.map(|x| {
-                                    vec.push(x);
-                                    vec
-                                })
-                            })
-                        }
-                    )
-            },
-
-            _ => Err(()),
-        }
-    }
-
-    //  Lexical item := <{F}, {F}, [F]>
-    pub fn to_lexical_item(val: Value) -> Result<LexicalItem, ()> {
-        match val {
-            Value::Tuple(vals) => {
-                if vals.len() != 3 {
-                    return Err(());
-                }
-
-                let mut it = vals.into_iter();
-
-                let sem = to_set(it.next().unwrap(), to_feature)?;
-                let syn = to_set(it.next().unwrap(), to_feature)?;
-                let phon = to_vec(it.next().unwrap(), to_feature)?;
-
-                Ok(LexicalItem::new(sem, syn, phon, None))
-            },
-
-            _ => Err(()),
-        }
-    }
-
-    //  Lexical item token := < LI, usize >
-    pub fn to_lexical_item_token(val: Value) -> Result<LexicalItemToken, ()> {
-        match val {
-            Value::Tuple(vals) => {
-                if vals.len() != 2 {
-                    return Err(());
-                }
-
-                let mut it = vals.into_iter();
-
-                let li = to_lexical_item(it.next().unwrap())?;
-                let k = to_usize(it.next().unwrap())?;
-
-                Ok(LexicalItemToken::new(li, k))
-            },
-
-            _ => Err(()),
-        }
-    }
-
-    //  Lexicon := {Li}
-    pub fn to_lexicon(val: Value) -> Result<Lexicon, ()> {
-        match val {
-            Value::Set(vals) =>
-                vals.into_iter()
-                    .map(to_lexical_item)
-                    .fold(
-                        Ok(set!()),
-                        |liset, li| {
-                            liset.and_then(|mut liset| {
-                                li.map(|li| {
-                                    liset.insert(li);
-                                    liset
-                                })
-                            })
-                        }
-                    ),
-
-            _ => Err(()),
-        }
-    }
-
-    //  UG := <{F}, {F}, {F}>
-    pub fn to_ug<T: Triggers>(val: Value) -> Result<UniversalGrammar<T>, ()> {
-        match val {
-            Value::Tuple(vals) => {
-                if vals.len() != 3 {
-                    return Err(());
-                }
-
-                let mut it = vals.into_iter();
-
-                let phon_f = to_set(it.next().unwrap(), to_feature)?;
-                let syn_f = to_set(it.next().unwrap(), to_feature)?;
-                let sem_f = to_set(it.next().unwrap(), to_feature)?;
-
-                Ok(UniversalGrammar::new(phon_f, syn_f, sem_f))
-            },
-
-            _ => Err(()),
-        }
-    }
-
-    //  SO := ... you get the idea, sum type
-    pub fn to_so(val: Value) -> Result<SyntacticObject, ()> {
-        //  Lit?
-        let val_for_set = val.clone();
-        let val_for_lit = val;
-        
-        if let Ok(lit) = to_lexical_item_token(val_for_lit) {
-            return Ok(SyntacticObject::LexicalItemToken(lit));
-        }
-
-        //  Set?
-        let val_for_transfer = val_for_set.clone();
-        if let Ok(set) = to_set(val_for_set, to_so) {
-            return Ok(SyntacticObject::Set(set.into_iter().collect()));
-        }
-
-        //  Transfer?
-        match val_for_transfer {
-            Value::Tuple(vals) => {
-                if vals.len() != 3 {
-                    return Err(());
-                }
-
-                let mut it = vals.into_iter();
-
-                let so = to_so(it.next().unwrap())?;
-                let pf = to_vec(it.next().unwrap(), to_feature)?;
-                let lf = to_set(it.next().unwrap(), to_feature)?;
-
-                Ok(SyntacticObject::Transfer { so: Box::new(so), pf, lf })
-            },
-
-            _ => Err(()),
-        }
-    }
-
-    //  Stage := < La, Wksp >
-    pub fn to_stage(val: Value) -> Result<Stage, ()> {
-        match val {
-            Value::Tuple(vals) => {
-                if vals.len() != 2 {
-                    return Err(());
-                }
-
-                let mut it = vals.into_iter();
-
-                let la = to_set(it.next().unwrap(), to_lexical_item_token)?;
-                let w = to_set(it.next().unwrap(), to_so)?;
-
-                Ok(Stage { la, w: Workspace::new(w) })
-            },
-
-            _ => Err(()),
-        }
-    }
-
-    //  Derivation := [Stage]
-    pub fn to_derivation(val: Value) -> Result<Vec<Stage>, ()> {
-        to_vec(val, to_stage)
-    }
 }
 
 
@@ -757,23 +349,50 @@ impl Engine {
 
 
 pub fn run_stdin() {
+    //  Buffer for stdin
     let mut buffer = String::new();
     let mut engine = Engine::new();
 
+    //  Actual input
+    let mut input = String::new();
+
+    let mut clear_input: bool = true;
+
     loop {
         buffer.clear();
-        io::stdout().write_all(b"> ").unwrap();
+        io::stdout().write_all(
+            if clear_input { b">>> " } else { b"... " }
+        ).unwrap();
         io::stdout().flush().unwrap();
         io::stdin().read_line(&mut buffer).unwrap();
 
-        let input = buffer.trim();
+        if clear_input {
+            input.clear();
+        }
+        input.extend(buffer.trim().chars());
 
-        if input.trim() == "q" {
+        if input == "q" {
             break;
         }
 
-        for stmt in parsers::Statements::make(&input, None) {
-            engine.process(stmt);
+        let mut stmts = parsers::Statements::make(&input, None);
+
+        clear_input = true;
+        loop {
+            match stmts.next() {
+                StatementsAction::Statement(stmt) => {
+                    engine.process(stmt);
+                },
+
+                StatementsAction::MaybeStatement => {
+                    clear_input = false;
+                    break;
+                },
+
+                StatementsAction::NoStatement => {
+                    break;
+                },
+            }
         }
     }
 }
@@ -788,7 +407,15 @@ pub fn run_file(path: &Path) {
     let mut buf_reader = BufReader::new(file);
     buf_reader.read_to_string(&mut buffer).unwrap();
 
-    for stmt in parsers::Statements::make(&buffer, Some(path)) {
-        engine.process(stmt);
+    let mut stmts = parsers::Statements::make(&buffer, None);
+
+    loop {
+        match stmts.next() {
+            StatementsAction::Statement(stmt) => {
+                engine.process(stmt);
+            },
+
+            _ => { break },
+        }
     }
 }
