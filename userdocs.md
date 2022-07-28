@@ -71,7 +71,7 @@ You can bind a new value to a previously used name. `cands` will tell you that t
 > let x: F = "acc";
 ```
 
-Hashtag (`#`) starts a line comment. Anything after the hashtag (including the hashtag itself) will be ignored, until the end of the current line.
+Hashtag (`#`) starts a line comment.
 
 ```
 > # This is a comment
@@ -235,9 +235,9 @@ We are done setting the lexicon. The next step is to set UG (the order doesn't m
 
 ```
 set ug = <
-    { "HELP", "me" },       # PHON-F
-    { "D", "V", "=D" },     # SYN-F
-    { "help'", "me'" }      # SEM-F
+    { "HELP", "me" },
+    { "D", "V", "=D" },
+    { "help'", "me'" }
 >;
 ```
 

@@ -365,11 +365,19 @@ pub fn run_stdin() {
         ).unwrap();
         io::stdout().flush().unwrap();
         io::stdin().read_line(&mut buffer).unwrap();
+        
+        buffer = buffer.trim().to_string();
 
         if clear_input {
             input.clear();
         }
-        input.extend(buffer.trim().chars());
+        //  If the user provided an empty continuation, stop trying...
+        else if buffer.is_empty() {
+            clear_input = true;
+            continue;
+        }
+
+        input.extend(buffer.chars());
 
         if input == "q" {
             break;

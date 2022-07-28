@@ -523,7 +523,7 @@ fn statement(s: Span) -> IResult<Span, Statement, SpanContextErrorTree> {
 
 
 fn comment(s: Span) -> IResult<Span, (), SpanContextErrorTree> {
-    let (s, _) = tag("#").context(Context::Comment).parse(s)?;
+    let (s, _) = nom::bytes::complete::tag("#").context(Context::Comment).parse(s)?;
     let (s, _) = not_line_ending.parse(s)?;
 
     Ok((s, ()))
