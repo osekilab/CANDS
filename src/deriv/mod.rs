@@ -62,7 +62,16 @@ pub struct ILanguage<T: Triggers> {
 /// From Definition 6 in C&S 2016, p. 45.
 /// 
 /// >A *lexical array* (LA) is a finite set of lexical item tokens.
-pub type LexicalArray = Set<LexicalItemToken>;
+#[derive(Debug, Clone, PartialEq, Eq, Deref, DerefMut)]
+pub struct LexicalArray(pub Set<LexicalItemToken>);
+
+
+
+impl LexicalArray {
+    pub fn new(set: Set<LexicalItemToken>) -> Self {
+        LexicalArray(set)
+    }
+}
 
 
 
@@ -518,7 +527,7 @@ pub fn is_derivation<T: Triggers>(il: &ILanguage<T>, stages: &[Stage]) -> bool {
 
     let ILanguage { lex, ug, .. } = il;
 
-    for lit in la1 {
+    for lit in la1.0.iter() {
         let LexicalItemToken { li, .. } = lit;
         if !lex.contains(li) {
             my_info!("Can't find this lexical item in the lexicon: {}", li);
