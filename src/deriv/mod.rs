@@ -70,7 +70,7 @@ pub type LexicalArray = Set<LexicalItemToken>;
 /// 
 /// See [`Stage`].
 #[derive(Debug, Clone, PartialEq, Eq, Deref, DerefMut)]
-pub struct Workspace(Set<SyntacticObject>);
+pub struct Workspace(pub Set<SyntacticObject>);
 
 
 

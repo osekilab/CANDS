@@ -93,45 +93,45 @@
 
 
 
-mod utils;
-mod feature;
-mod ops;
-mod deriv;
-mod prelude;
-mod labels;
-mod cli;
+pub mod utils;
+pub mod feature;
+pub mod ops;
+pub mod deriv;
+pub mod prelude;
+pub mod labels;
+// mod cli;
 
 
 
 use std::path::{ PathBuf };
 
-use clap::Parser;
+// use clap::Parser;
 
 
 
-#[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
-struct Args {
-    #[clap(value_parser)]
-    file_path: Option<PathBuf>,
-}
+// #[derive(Parser, Debug)]
+// #[clap(author, version, about, long_about = None)]
+// struct Args {
+//     #[clap(value_parser)]
+//     file_path: Option<PathBuf>,
+// }
 
 
 
-fn main() {
-    std::env::set_var("RUST_LOG", "info");
+// fn main() {
+//     std::env::set_var("RUST_LOG", "info");
 
-    env_logger::Builder::from_default_env()
-        .format_target(false)
-        .init();
+//     env_logger::Builder::from_default_env()
+//         .format_target(false)
+//         .init();
 
-    let args = Args::parse();
+//     let args = Args::parse();
 
-    match args.file_path {
-        Some(ref file_path) => cli::run_file(file_path),
-        None => cli::run_stdin(),
-    };
-}
+//     match args.file_path {
+//         Some(ref file_path) => cli::run_file(file_path),
+//         None => cli::run_stdin(),
+//     };
+// }
 
 #[cfg(test)]
 mod tests;
