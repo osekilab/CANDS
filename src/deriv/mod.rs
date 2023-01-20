@@ -19,6 +19,7 @@ use std::fmt;
 /// 
 /// >Universal Grammar is a 6-tuple: $\\langle \\textrm{PHON-F}, \\textrm{SYN-F}, \\textrm{SEM-F}, \\textrm{Select}, \\textrm{Merge}, \\textrm{Transfer} \\rangle$.
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct UniversalGrammar<T: Triggers> {
     pub phon_f:     Set<Feature>,
     pub syn_f:      Set<Feature>,
@@ -50,6 +51,7 @@ pub type Lexicon = Set<LexicalItem>;
 /// From Definition 4 in C&S 2016, p. 45.
 /// 
 /// An I-language is a pair $\\langle \\textrm{Lex}, \\textrm{UG} \\rangle$ where $\\textrm{Lex}$ is a lexicon and $\\textrm{UG}$ is Universal Grammar.
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ILanguage<T: Triggers> {
     pub lex: Lexicon,
     pub ug: UniversalGrammar<T>,
@@ -63,6 +65,7 @@ pub struct ILanguage<T: Triggers> {
 /// 
 /// >A *lexical array* (LA) is a finite set of lexical item tokens.
 #[derive(Debug, Clone, PartialEq, Eq, Deref, DerefMut)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct LexicalArray(pub Set<LexicalItemToken>);
 
 
@@ -79,6 +82,7 @@ impl LexicalArray {
 /// 
 /// See [`Stage`].
 #[derive(Debug, Clone, PartialEq, Eq, Deref, DerefMut)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Workspace(pub Set<SyntacticObject>);
 
 
@@ -202,6 +206,7 @@ impl fmt::Display for Workspace {
 /// 
 /// >A *stage* is a pair $S = \\langle \textrm{LA}, W \\rangle$, where $\\textrm{LA}$ is a lexical array and $W$ is a set of syntactic objects. We call $W$ the *workspace* of $S$.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Stage {
     pub la: LexicalArray,
     pub w: Workspace,

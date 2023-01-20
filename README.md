@@ -51,3 +51,7 @@ RUSTDOCFLAGS="--html-in-header katex-header.html" cargo doc --no-deps --open
     - [ ] Define SO as a trait instead and have multiple implementations
     - [ ] Impl 1: binary set formation -- current impl
     - [ ] Impl 2: immutable mutually recursive data structure, i.e. tree with parent pointers
+
+# Also:
+
+https://rust-lang.github.io/api-guidelines/about.html

@@ -11,6 +11,7 @@ use std::fmt;
 /// 
 /// >A *lexical item* is a triple: $\\textrm{LI} = \langle \\textrm{SEM}, \\textrm{SYN}, \\textrm{PHON} \rangle$ where $\\textrm{SEM}$ and $\\textrm{SYN}$ are finite sets such that $\\textrm{SEM} \\subseteq \\textrm{SEM-F}$, $\\textrm{SYN} \\subseteq \\textrm{SYN-F}$, and $\\textrm{PHON} \\in \\textrm{PHON-F}$*.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct LexicalItem {
     /// Semantic features.
     pub sem: Set<Feature>,
@@ -97,6 +98,7 @@ impl fmt::Display for LexicalItem {
 /// ```
 /// li!(; "n", "EPP"; "-voice"; "book")
 /// ```
+#[macro_export]
 macro_rules! li {
     ($($sem:expr),*; $($syn:expr),*; $($phon:expr),*) => {
         LexicalItem::new(
@@ -147,7 +149,7 @@ mod tests {
             let li2 = LexicalItem {
                 sem:        fset!(),
                 syn:        fset!("N"),
-                phon:       fset!("Alex"),
+                phon:       fvec!("Alex"),
                 shorthand:  None,
             };
 
@@ -165,7 +167,7 @@ mod tests {
             let li2 = LexicalItem {
                 sem:        fset!(),
                 syn:        fset!("N"),
-                phon:       fset!("Alex"),
+                phon:       fvec!("Alex"),
                 shorthand:  Some(format!("Alex")),
             };
 
@@ -182,7 +184,7 @@ mod tests {
             let li2 = LexicalItem {
                 sem:        fset!(),
                 syn:        fset!(),
-                phon:       fset!(),
+                phon:       fvec!(),
                 shorthand:  Some(format!("Alex"))
             };
 

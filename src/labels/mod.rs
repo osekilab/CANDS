@@ -79,6 +79,7 @@ pub trait Triggers {
 
 
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BasicTriggers;
 
 

@@ -10,6 +10,7 @@ use std::fmt;
 /// 
 /// >A *lexical item token* is a pair $\\langle \\textrm{LI}, k \\rangle$ where $\\textrm{LI}$ is a lexical item and $k$ is an integer.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct LexicalItemToken {
     pub li: LexicalItem,
     pub k: usize,
@@ -43,6 +44,7 @@ impl fmt::Display for LexicalItemToken {
 /// ```
 /// lit!(li!(; "n", "EPP"; "-voice"; "book"), 1)
 /// ```
+#[macro_export]
 macro_rules! lit {
     ($li:expr, $k:expr) => {
         LexicalItemToken::new($li, $k)
@@ -74,7 +76,7 @@ mod tests {
             let li2 = LexicalItem::new(
                 fset!(),
                 fset!("N"),
-                fset!("Alex"),
+                fvec!("Alex"),
                 None,
             );
             let lit2 = LexicalItemToken::new(li2, 12345);
@@ -93,7 +95,7 @@ mod tests {
             let li2 = LexicalItem::new(
                 fset!(),
                 fset!("N"),
-                fset!("Alex"),
+                fvec!("Alex"),
                 Some(format!("Alex"))
             );
             let lit2 = LexicalItemToken::new(li2, 12345);

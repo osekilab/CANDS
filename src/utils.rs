@@ -11,7 +11,7 @@ pub type Set<T> = BTreeSet<T>;
 
 
 /// Macro to generate a set.
-// #[macro_export]
+#[macro_export]
 macro_rules! set {
     () => { Set::new() };
     ($($e:expr),*) => {

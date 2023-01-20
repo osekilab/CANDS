@@ -3,7 +3,7 @@ use std::fmt;
 
 
 macro_rules! wh_feature { () => { f!("wh") }; }
-macro_rules! epp_feature { () => { f!("epp") }; }
+macro_rules! epp_feature { () => { f!("EPP") }; }
 macro_rules! comp_feature { () => { f!("C") } }
 macro_rules! strong_light_verb_feature { () => { f!("v*") } }
 
@@ -15,6 +15,7 @@ pub const CATSEL_FEATURE_PREFIX: &'static str = "=";
 
 /// Features are identified by strings.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Feature(pub String);
 
 
@@ -40,9 +41,9 @@ impl Feature {
 /// # Example
 ///
 /// ```
-/// f!("wh")
+/// cands::f!("wh")
 /// ```
-// #[macro_export]
+#[macro_export]
 macro_rules! f {
     ($literal:expr) => {
         Feature::new(String::from($literal))
@@ -60,7 +61,7 @@ pub(crate) use f;
 /// ```
 /// fset!("n", "+voiced", "EPP")
 /// ```
-// #[macro_export]
+#[macro_export]
 macro_rules! fset {
     ($($literal:expr),*) => {
         {
@@ -80,7 +81,7 @@ pub(crate) use fset;
 /// ```
 /// fvec!["n", "+voiced", "EPP"]
 /// ```
-// #[macro_export]
+#[macro_export]
 macro_rules! fvec {
     [$($literal:expr),*] => {
         {

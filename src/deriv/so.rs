@@ -14,6 +14,7 @@ use std::fmt;
 /// >2.  $X = $ Cyclic-Transfer(SO) for some syntactic object SO, or
 /// >3.  $X$ is a set of syntactic objects.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SyntacticObject {
     LexicalItemToken(LexicalItemToken),
     //  There is no pattern for CyclicTransfer! This is because CyclicTransfer is an operation and not a kind of syntactic object.
@@ -856,67 +857,6 @@ mod tests {
             assert!(c.c_commands(&a, &ab_c));
             assert!(!a.c_commands(&c, &ab_c));
         }
-
-
-
-        #[test]
-        fn c_commands1() {
-            let a = so!(lit!(li!("A")));
-            let b = so!(lit!(li!("B")));
-            let ab = so!(
-                so!(lit!(li!("A"))),
-                so!(lit!(li!("B"))),
-            );
-
-            assert!(a.c_commands(&b, &ab));
-            assert!(b.c_commands(&a, &ab));
-        }
-
-
-
-        #[test]
-        fn c_commands2() {
-            let a = so!(lit!(li!("A")));
-            let b = so!(lit!(li!("B")));
-            let c = so!(lit!(li!("C")));
-            let ab = so!(
-                so!(lit!(li!("A"))),
-                so!(lit!(li!("B"))),
-            );
-            let bc = so!(
-                so!(lit!(li!("B"))),
-                so!(lit!(li!("C"))),
-            );
-            let a_bc = so!(
-                so!(lit!(li!("A"))),
-                so!(
-                    so!(lit!(li!("B"))),
-                    so!(lit!(li!("C"))),
-                ),
-            );
-            let ab_c = so!(
-                so!(
-                    so!(lit!(li!("A"))),
-                    so!(lit!(li!("B"))),
-                ),
-                so!(lit!(li!("C"))),
-            );
-
-            assert!(a.c_commands(&bc, &a_bc));
-            assert!(bc.c_commands(&a, &a_bc));
-            assert!(ab.c_commands(&c, &ab_c));
-            assert!(c.c_commands(&ab, &ab_c));
-
-            assert!(a.c_commands(&c, &a_bc));
-            assert!(!c.c_commands(&a, &a_bc));
-            assert!(c.c_commands(&a, &ab_c));
-            assert!(!a.c_commands(&c, &ab_c));
-        }
-
-
-
-        #[test]
-        fn make() {}
     }
 
 
@@ -977,7 +917,7 @@ mod tests {
         #[test]
         fn contained_sos1() {
             let so = so!(lit!(li!(;;; "John"), 1));
-            let iter = so.contained_sos();
+            let iter = so.contained_sos(false, false);
 
             let multiset = HashMap::new();
 
@@ -990,7 +930,7 @@ mod tests {
                 so!(lit!(li!(;;; "John"), 1)),
                 so!(lit!(li!(;;; "eat"), 1)),
             );
-            let iter = so.contained_sos();
+            let iter = so.contained_sos(false, false);
 
             let multiset = HashMap::from([
                 (so!(lit!(li!(;;; "John"), 1)), 1),
@@ -1013,7 +953,7 @@ mod tests {
                     ),
                 ),
             );
-            let iter = so.contained_sos();
+            let iter = so.contained_sos(false, false);
 
             let multiset = HashMap::from([
                 //  helped
