@@ -15,7 +15,7 @@ pub trait Triggers {
     /// >1.  If $A$ is a lexical item token with $n$ trigger features, then $\\textrm{Triggers} (A)$ returns all of those $n$ trigger features.
     /// >2.  If $A$ is a set, then $A = \\{ B, C \\}$ where $\\textrm{Triggers} (B)$ is nonempty, and $\\textrm{Triggers} (C) = \\varnothing$, and $\\textrm{Triggers} (A) = \\textrm{Triggers} (B) \setminus \\{ \\textrm{TF} \\}$, for some trigger feature $\\textrm{TF} \\in \\textrm{Triggers} B)$.
     /// >3.  Otherwise, $\\textrm{Triggers} (A)$ is undefined.
-    fn triggers(so: &SyntacticObject, w: &Workspace) -> Result<Set<Feature>, ()>;
+    fn triggers(so: &SyntacticObject, w: &Workspace) -> Result<Set<SyntacticFeature>, ()>;
 
     /// Label.
     /// 
@@ -86,7 +86,7 @@ pub struct BasicTriggers;
 
 impl BasicTriggers {
     /// Check one feature.
-    fn check_tf(mut from: Set<Feature>, wrt: &SyntacticObject, w: &Workspace) -> Result<Set<Feature>, ()> {
+    fn check_tf(mut from: Set<SyntacticFeature>, wrt: &SyntacticObject, w: &Workspace) -> Result<Set<SyntacticFeature>, ()> {
         //  Get the syntactic features of the label of `wrt`
         let wrt_syn = &Self::label_of(wrt, w)?.li.syn;
         // eprintln!("Check-TF: wrt_syn = {:?}", wrt_syn);
@@ -100,10 +100,15 @@ impl BasicTriggers {
         //  Check category selection
         if let Some(catsel_feature) = from.iter()
             .find(|&f| {
-                //  If `f` were "=v*", then `cat_feature` would be "v*".
-                let cat_feature = f!(&f.0[CATSEL_FEATURE_PREFIX.len()..]);
-                f.0.starts_with(CATSEL_FEATURE_PREFIX) &&
-                (wrt_syn.contains(&cat_feature))
+                if let SyntacticFeature::Normal(f) = f {
+                    //  If `f` were "=v*", then `cat_feature` would be "v*".
+                    let cat_feature = SyntacticFeature::Normal(f!(&f.0[CATSEL_FEATURE_PREFIX.len()..]));
+                    f.0.starts_with(CATSEL_FEATURE_PREFIX) &&
+                    (wrt_syn.contains(&cat_feature))
+                }
+                else {
+                    false
+                }
             })
             .map(|f| f.clone()) // borrowck wins
         {
@@ -124,7 +129,7 @@ impl BasicTriggers {
 
 
 impl Triggers for BasicTriggers {
-    fn triggers(so: &SyntacticObject, w: &Workspace) -> Result<Set<Feature>, ()> {
+    fn triggers(so: &SyntacticObject, w: &Workspace) -> Result<Set<SyntacticFeature>, ()> {
         // eprintln!("Triggers: so =\n{}", so);
 
         match so {
@@ -134,7 +139,9 @@ impl Triggers for BasicTriggers {
                         .filter(|&f| {
                             f == &wh_feature!() ||
                             f == &epp_feature!() ||
-                            f.0.starts_with(CATSEL_FEATURE_PREFIX)
+                            if let SyntacticFeature::Normal(f) = f {
+                                f.0.starts_with(CATSEL_FEATURE_PREFIX)
+                            } else { false }
                         })
                         .cloned()
                         .collect()

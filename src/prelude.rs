@@ -16,7 +16,7 @@ pub(crate) use crate::utils::{
     inc, dec, my_trace, my_debug, my_info, my_error,
 };
 pub(crate) use crate::feature::{
-    Feature, f, fset, fvec,
+    Feature, SyntacticFeature, f, fset, fvec,
     wh_feature,
     epp_feature,
     comp_feature,

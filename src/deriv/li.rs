@@ -1,5 +1,5 @@
 use crate::utils::{ Set };
-use crate::feature::{ Feature };
+use crate::feature::{ Feature, SyntacticFeature };
 
 use std::fmt;
 
@@ -17,13 +17,13 @@ pub struct LexicalItem {
     pub sem: Set<Feature>,
 
     /// Syntactic features.
-    pub syn: Set<Feature>,
+    pub syn: Set<SyntacticFeature>,
 
     /// Phonological features.
     pub phon: Vec<Feature>,
 
     /// Optional shorthand.
-    shorthand: Option<String>,
+    pub shorthand: Option<String>,
 }
 
 
@@ -31,7 +31,7 @@ pub struct LexicalItem {
 impl LexicalItem {
     pub fn new(
         sem: Set<Feature>,
-        syn: Set<Feature>,
+        syn: Set<SyntacticFeature>,
         phon: Vec<Feature>,
         shorthand: Option<String>,
     ) -> Self {

@@ -2,10 +2,10 @@ use std::fmt;
 
 
 
-macro_rules! wh_feature { () => { f!("wh") }; }
-macro_rules! epp_feature { () => { f!("EPP") }; }
-macro_rules! comp_feature { () => { f!("C") } }
-macro_rules! strong_light_verb_feature { () => { f!("v*") } }
+macro_rules! wh_feature { () => { SyntacticFeature::Normal(f!("wh")) }; }
+macro_rules! epp_feature { () => { SyntacticFeature::Normal(f!("EPP")) }; }
+macro_rules! comp_feature { () => { SyntacticFeature::Normal(f!("C")) } }
+macro_rules! strong_light_verb_feature { () => { SyntacticFeature::Normal(f!("v*")) } }
 
 pub(crate) use { wh_feature, epp_feature, comp_feature, strong_light_verb_feature };
 
@@ -31,6 +31,74 @@ impl fmt::Display for Feature {
 impl Feature {
     pub fn new(s: String) -> Self {
         Feature(s)
+    }
+}
+
+
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum SyntacticFeature {
+    Normal(Feature),
+    Valuable {
+        interpretable: bool,
+        feature: Feature,
+        value: Option<String>,
+    },
+}
+
+
+
+impl fmt::Display for SyntacticFeature {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            SyntacticFeature::Normal(feature) =>
+                write!(f, "{}", feature),
+
+            SyntacticFeature::Valuable { interpretable, feature, value } =>
+                write!(f, "{}{}:{}",
+                    if *interpretable { "" } else { "u" },
+                    feature,
+                    match value {
+                        Some(value) => value,
+                        None => "_"
+                    }
+                ),
+        }
+    }
+}
+
+
+
+impl SyntacticFeature {
+    pub fn is_interpretable(&self) -> bool {
+        match self {
+            SyntacticFeature::Valuable { interpretable: true, .. } => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_uninterpretable(&self) -> bool {
+        match self {
+            SyntacticFeature::Valuable { interpretable: false, .. } => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_person(&self) -> bool {
+        match self {
+            SyntacticFeature::Valuable { feature, .. } =>
+                feature.0 == "Person",
+            _ => false,
+        }
+    }
+
+    pub fn is_number(&self) -> bool {
+        match self {
+            SyntacticFeature::Valuable { feature, .. } =>
+                feature.0 == "Number",
+            _ => false,
+        }
     }
 }
 

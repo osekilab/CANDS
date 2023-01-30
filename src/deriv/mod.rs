@@ -4,10 +4,12 @@ pub mod so;
 
 
 
+use crate::feature::SyntacticFeature;
 use crate::prelude::*;
 
 use derive_more::{ Deref, DerefMut };
 
+use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::fmt;
 
@@ -24,13 +26,13 @@ pub struct UniversalGrammar<T: Triggers> {
     pub phon_f:     Set<Feature>,
     pub syn_f:      Set<Feature>,
     pub sem_f:      Set<Feature>,
-    t:              PhantomData<T>,
+    phantom:        PhantomData<T>,
 }
 
 impl<T: Triggers> UniversalGrammar<T> {
     pub fn new(phon_f: Set<Feature>, syn_f: Set<Feature>, sem_f: Set<Feature>) -> Self {
         Self {
-            phon_f, syn_f, sem_f, t: PhantomData::default()
+            phon_f, syn_f, sem_f, phantom: PhantomData::default()
         }
     }
 }
@@ -46,6 +48,11 @@ pub type Lexicon = Set<LexicalItem>;
 
 
 
+//  { phon -> [ syn, newphon ] }
+pub type RealizeMap = HashMap<Vec<Feature>, Vec<(Vec<SyntacticFeature>, Vec<Feature>)>>;
+
+
+
 /// I-language.
 /// 
 /// From Definition 4 in C&S 2016, p. 45.
@@ -55,6 +62,7 @@ pub type Lexicon = Set<LexicalItem>;
 pub struct ILanguage<T: Triggers> {
     pub lex: Lexicon,
     pub ug: UniversalGrammar<T>,
+    pub realize_map: RealizeMap,
 }
 
 
@@ -501,6 +509,68 @@ fn derive_by_transfer<T: Triggers>(stage1: &Stage, stage2: &Stage) -> bool {
 
 
 
+#[logwrap::logwrap]
+fn search_and_agree(probe: LexicalItemToken, parent: &SyntacticObject)
+
+
+
+#[logwrap::logwrap]
+fn unwind_and_agree(so: SyntacticObject) -> SyntacticObject {
+    so
+}
+
+
+
+#[logwrap::logwrap]
+fn derive_by_agree(stage1: &Stage, stage2: &Stage) -> bool {
+    let Stage { la: la1, w: w1 } = stage1;
+    let Stage { la: la2, w: w2 } = stage2;
+
+    if la1 != la2 {
+        my_debug!("The lexical arrays must be the same.");
+        return false;
+    }
+
+    if w1.0.is_empty() {
+        my_debug!("The first workspace in the pair cannot be empty.");
+        return false;
+    }
+
+    my_debug!("Search for an active probe...");
+    for root in w1.0.iter() {
+        // for so in root.contained_sos(true, true) {
+        //     if let SyntacticObject::LexicalItemToken(lit) = so {
+        //         if (
+        //             lit.li.syn.iter()
+        //                 .any(|synf| synf.is_uninterpretable())
+        //         ) {
+        //             my_debug!("Probe is an active probe: {}", lit);
+        //             my_debug!("Search for an active goal...");
+        //             for so2 in root.contained_sos(true, true) {
+
+        //             }
+        //         }
+        //     }
+        // }
+
+        let agreed_root = unwind_and_agree(root.clone());
+
+        //  If we get w2 by changing the kth root in w1, return true.
+        let mut agreed_w2 = w1.clone();
+        agreed_w2.remove(root);
+        agreed_w2.insert(agreed_root);
+        if agreed_w2 == *w2 {
+            my_info!("This pair of stages is derived by Agree.");
+            return true;
+        }
+    }
+
+    //  unwind stuff!
+    false
+}
+
+
+
 /// Check if the sequence of stages `stages` is a derivation from the I-language `il`.
 /// 
 /// From Definition 14, C&S 2016, p. 48. The original derivation, given below, defines a derivation with respect to just a lexicon, but since it invokes syntactic operations like Select and Merge, we define it with respect to an I-language, which includes a UG as well as a lexicon.
@@ -618,6 +688,16 @@ pub fn is_derivation<T: Triggers>(il: &ILanguage<T>, stages: &[Stage]) -> bool {
             my_debug!("------------------------------------------------------------");
             my_debug!("Check for Derive-by-Transfer...");
             if derive_by_transfer::<T>(stage1, stage2) {
+                my_debug!("Match!");
+                break true;
+            }
+            my_debug!("No match.");
+
+            //  Derive-by-Agree?
+
+            my_debug!("------------------------------------------------------------");
+            my_debug!("Check for Derive-by-Agree...");
+            if derive_by_agree(stage1, stage2) {
                 my_debug!("Match!");
                 break true;
             }

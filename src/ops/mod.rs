@@ -1,6 +1,9 @@
+use std::collections::HashMap;
 use std::marker::{ PhantomData };
 use std::iter;
 
+use crate::deriv::RealizeMap;
+use crate::feature::{SyntacticFeature, self};
 use crate::prelude::*;
 
 
@@ -107,6 +110,29 @@ pub fn is_strong_phase<T: Triggers>(so: &SyntacticObject, w: &Workspace) -> bool
             }
         })
         .is_some()
+}
+
+
+
+fn realize(map: &RealizeMap, phon: &Vec<Feature>, syn: &Set<SyntacticFeature>) -> Vec<Feature> {
+    match map.get(phon) {
+        Some(vec) => {
+            let mut max_num_matches = None;
+            let mut max_newphon = None;
+
+            for (syn_subset, newphon) in vec {
+                if syn_subset.iter().all(|f| syn.contains(f)) {
+                    if max_num_matches.is_none() || max_num_matches.unwrap() < syn_subset.len() {
+                        max_num_matches = Some(syn_subset.len());
+                        max_newphon = Some(newphon);
+                    }
+                }
+            }
+
+            max_newphon.cloned().unwrap_or_else(|| phon.clone())
+        },
+        None => phon.clone(),
+    }
 }
 
 
@@ -310,4 +336,147 @@ pub fn cyclic_transfer<T: Triggers>(so: SyntacticObject, w: &Workspace) -> Resul
             Err(())
         }
     }
+}
+
+
+
+pub fn agree(probe: &LexicalItemToken, goal: &LexicalItemToken) -> (LexicalItemToken, LexicalItemToken) {
+    let new_probe_syn = probe.li.syn.iter()
+        .map(|synf| match synf {
+            //  Don't change normal features.
+            SyntacticFeature::Normal(_) => synf.clone(),
+
+            //  If feature F is valuable...
+            SyntacticFeature::Valuable {
+                interpretable,
+                feature,
+                value
+            } => {
+                match value {
+                    //  If F is valued, pass it on.
+                    Some(_) => synf.clone(),
+
+                    //  Otherwise...
+                    None => {
+                        //  Try to find the value V2 of some feature F2 in
+                        //  G.syn such that F2 and F have the same type, and F2
+                        //  is valued.
+                        match goal.li.syn.iter().find_map(|synf2| {
+                            match synf2 {
+                                SyntacticFeature::Valuable {
+                                    feature: feature2,
+                                    value: Some(value2),
+                                    ..
+                                } => {
+                                    match feature == feature2 {
+                                        true => Some(value2),
+                                        false => None,
+                                    }
+                                },
+
+                                _ => None,
+                            }
+                        }) {
+                            //  If such V2 exists, use it to value F.
+                            Some(value2) => SyntacticFeature::Valuable {
+                                interpretable: *interpretable,
+                                feature: feature.clone(),
+                                value: Some(value2.clone())
+                            },
+
+                            //  Otherwise, pass F on.
+                            None => synf.clone(),
+                        }
+                    },
+                }
+            },
+        })
+        .collect();
+
+    //  Defective iff not phi-complete.
+    let probe_is_defective = !(
+        (probe.li.syn.iter().any(feature::is_person)) &&
+        (probe.li.syn.iter().any(feature::is_number))
+    );
+
+    let new_goal_syn = goal.li.syn.iter()
+        .map(|synf| match synf {
+            //  Don't change normal features.
+            SyntacticFeature::Normal(_) => synf.clone(),
+
+            //  If feature F is valuable...
+            SyntacticFeature::Valuable {
+                interpretable,
+                feature,
+                value 
+            } => {
+                match value {
+                    //  If F is valued, pass it on.
+                    Some(_) => synf.clone(),
+
+                    //  Otherwise...
+                    None => {
+                        //  If probe is defective, ignore valueless F.
+                        if probe_is_defective {
+                            synf.clone()
+                        }
+                        //  Otherwise...
+                        else {
+                            //  Try to find the value V2 of some feature F2 in
+                            //  G.syn such that F2 and F have the same type, and F2
+                            //  is valued.
+                            match goal.li.syn.iter().find_map(|synf2| {
+                                match synf2 {
+                                    SyntacticFeature::Valuable {
+                                        feature: feature2,
+                                        value: Some(value2),
+                                        ..
+                                    } => {
+                                        match feature == feature2 {
+                                            true => Some(value2),
+                                            false => None,
+                                        }
+                                    },
+    
+                                    _ => None,
+                                }
+                            }) {
+                                //  If such V2 exists, use it to value F.
+                                Some(value2) => SyntacticFeature::Valuable {
+                                    interpretable: *interpretable,
+                                    feature: feature.clone(),
+                                    value: Some(value2.clone())
+                                },
+    
+                                //  Otherwise, pass F on.
+                                None => synf.clone(),
+                            }
+                        }
+                    },
+                }
+            },
+        })
+        .collect();
+
+    let new_probe = LexicalItemToken::new(
+        LexicalItem::new(
+            probe.li.sem.clone(),
+            new_probe_syn,
+            probe.li.phon.clone(),
+            probe.li.shorthand.clone()
+        ),
+        probe.k
+    );
+
+    let new_goal = LexicalItemToken::new(
+        LexicalItem::new(
+            goal.li.sem.clone(),
+            new_goal_syn,
+            goal.li.phon.clone(),
+            goal.li.shorthand.clone()
+        ),
+        goal.k
+    );
+
+    (new_probe, new_goal)
 }
