@@ -4,10 +4,13 @@ pub mod so;
 
 
 
+use crate::feature::SyntacticFeature;
+use crate::ops::agree;
 use crate::prelude::*;
 
 use derive_more::{ Deref, DerefMut };
 
+use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::fmt;
 
@@ -24,13 +27,13 @@ pub struct UniversalGrammar<T: Triggers> {
     pub phon_f:     Set<Feature>,
     pub syn_f:      Set<Feature>,
     pub sem_f:      Set<Feature>,
-    t:              PhantomData<T>,
+    phantom:        PhantomData<T>,
 }
 
 impl<T: Triggers> UniversalGrammar<T> {
     pub fn new(phon_f: Set<Feature>, syn_f: Set<Feature>, sem_f: Set<Feature>) -> Self {
         Self {
-            phon_f, syn_f, sem_f, t: PhantomData::default()
+            phon_f, syn_f, sem_f, phantom: PhantomData::default()
         }
     }
 }
@@ -46,6 +49,11 @@ pub type Lexicon = Set<LexicalItem>;
 
 
 
+//  { phon -> [ syn, newphon ] }
+pub type RealizeMap = HashMap<Vec<Feature>, Vec<(Vec<SyntacticFeature>, Vec<Feature>)>>;
+
+
+
 /// I-language.
 /// 
 /// From Definition 4 in C&S 2016, p. 45.
@@ -55,6 +63,7 @@ pub type Lexicon = Set<LexicalItem>;
 pub struct ILanguage<T: Triggers> {
     pub lex: Lexicon,
     pub ug: UniversalGrammar<T>,
+    pub realize_map: RealizeMap,
 }
 
 
@@ -501,6 +510,299 @@ fn derive_by_transfer<T: Triggers>(stage1: &Stage, stage2: &Stage) -> bool {
 
 
 
+/*
+    [Set
+        [LIT T ]
+        [Set
+            [LIT there (goal1) ]
+            [Set
+                [LIT catch ]
+                [LIT fish (goal2) ]
+            ]
+        ]
+    ]
+
+
+
+    `unwind_and_agree(probe, so, past_goals)` returns a syntactic object obtained by applying Agree to the probe to as many eligible goals as needed.  It actually returns (new_probe, SO', new_past_goals).
+
+    unwind_and_agree(probe, so, past_goals):
+        if !is_active(probe):
+            return so
+
+        match so:
+            case Transferred { .. }:
+                return (probe, so, [])
+
+            case LIT(lit):
+                if is_goal(lit) and lit != probe and match(probe, lit) and goal not in past_goals:
+                    (new_probe, new_goal) = Agree(probe, lit)
+                    return (new_probe, LIT(new_goal), [lit])
+
+            case Set(set):
+                new_set = Set()
+                unwind_children = Set()
+                put_probe_back_in = false
+
+                for child in set:
+                    if !is_active(probe):
+                        new_set.insert(child)
+
+                    agreed = false
+
+                    if let LIT(lit) = child:
+                        if lit == probe:
+                            put_probe_back_in = true
+                            continue
+
+                        if is_goal(lit) and lit != probe and match(probe, lit) and goal not in past_goals:
+                            (probe, new_goal) = Agree(probe, lit)
+                            past_goals.push(new_goal)
+                            agreed = true
+
+                    if !agreed:
+                        unwind_children.insert(child)
+
+                for child in unwind_children:
+                    (probe, new_child, past_goals) = unwind_and_agree(probe, child, past_goals)
+                    new_set.insert(new_child)
+
+                if put_probe_back_in:
+                    new_set.insert(probe)
+
+                return (probe, Set(new_set), past_goals)
+ */
+
+
+
+fn is_active(lit: &LexicalItemToken) -> bool {
+    lit.li.syn.iter().any(|f| f.is_uninterpretable())
+}
+
+
+
+fn matching_probe_goal(probe: &LexicalItemToken, goal: &LexicalItemToken) -> bool {
+    probe.li.syn.iter()
+        .any(|f| {
+            goal.li.syn.iter().any(|f2| f.matches(f2))
+        })
+}
+
+
+
+#[logwrap::logwrap]
+fn unwind_and_agree(
+    mut probe: LexicalItemToken,
+    so: SyntacticObject,
+    mut past_goals: Vec<LexicalItemToken>,
+    mut epp_target: Option<SyntacticObject>,
+) -> (LexicalItemToken, SyntacticObject, Vec<LexicalItemToken>, Option<SyntacticObject>) {
+    if !is_active(&probe) {
+        return (probe, so, past_goals, epp_target);
+    }
+
+    match so {
+        SyntacticObject::LexicalItemToken(lit) => {
+            // if is_goal(lit) and lit != probe and match(probe, lit) and goal not in past_goals:
+            //     (new_probe, new_goal) = Agree(probe, lit)
+            //     return (new_probe, LIT(new_goal), [lit])
+            if  is_active(&lit) &&
+                (lit != probe) &&
+                matching_probe_goal(&probe, &lit) &&
+                (!past_goals.contains(&lit))
+            {
+                let (new_probe, new_goal) = agree(&probe, &lit);
+                epp_target = epp_target.or_else(|| Some(SyntacticObject::LexicalItemToken(lit.clone())));
+                //  We add the old goal to `past_goals`, because traces of the
+                //  goal are identical to the old goal, not necessarily to the
+                //  new goal (e.g. consider goal = Case-marked DP)
+                past_goals.push(lit);
+                (new_probe, SyntacticObject::LexicalItemToken(new_goal), past_goals, epp_target)
+            }
+            else {
+                (probe, SyntacticObject::LexicalItemToken(lit), past_goals, epp_target)
+            }
+        },
+
+        SyntacticObject::Set(set) => {
+            let mut new_set = Set::new();
+            let mut unwind_children = vec![];
+            let mut put_probe_back_in = false;
+
+            for child in set.into_iter() {
+                if !is_active(&probe) {
+                    new_set.insert(child);
+                    continue;
+                }
+
+                let mut curr_child_is_goal = false;
+
+                if let SyntacticObject::LexicalItemToken(lit) = &child {
+                    if *lit == probe {
+                        put_probe_back_in = true;
+                        continue;
+                    }
+
+                    if  is_active(&lit) &&
+                        matching_probe_goal(&probe, &lit) &&
+                        (!past_goals.contains(&lit))
+                    {
+                        let (new_probe, new_goal) = agree(&probe, &lit);
+                        probe = new_probe;
+                        epp_target = epp_target.or_else(|| Some(SyntacticObject::LexicalItemToken(lit.clone())));
+                        //  We add the old goal to `past_goals`, because traces of the
+                        //  goal are identical to the old goal, not necessarily to the
+                        //  new goal (e.g. consider goal = Case-marked DP)
+                        past_goals.push(lit.clone());
+                        curr_child_is_goal = true;
+                        new_set.insert(SyntacticObject::LexicalItemToken(new_goal));
+                    }
+                }
+
+                if !curr_child_is_goal {
+                    unwind_children.push(child);
+                }
+            }
+
+            for child in unwind_children {
+                let (new_probe, new_child, new_past_goals, new_epp_target)
+                    = unwind_and_agree(probe, child, past_goals, epp_target);
+                probe = new_probe;
+                past_goals = new_past_goals;
+                epp_target = new_epp_target;
+                new_set.insert(new_child);
+            }
+
+            if put_probe_back_in {
+                new_set.insert(SyntacticObject::LexicalItemToken(probe.clone()));
+            }
+
+            (probe, SyntacticObject::Set(new_set), past_goals, epp_target)
+        },
+
+        _ => (probe, so, past_goals, epp_target),
+    }
+}
+
+
+
+/*
+    `next_agree(past_probes, root)` should return a root that is obtained by applying Agree to a probe and goal(s).  It will return None if Agree cannot be applied anywhere in the provided root.  It will not apply Agree to a probe if the probe is found in past_probes.
+
+    next_agree(past_probes, so):
+        match so:
+            case LIT(..):
+                return None
+
+            case Transferred { .. }:
+                return None
+
+            case Set(set):
+                for child in set:
+                    if let LIT(lit) = child:
+                        if is_probe(lit) and lit is not in past_probes:
+                            (new_probe, new_set, goals) = unwind_and_agree(lit, so, [])
+                            return Some(new_set, goals.first())
+
+                set.iter()
+                    .map(|child| next_agree(past_probes, child))
+                    /* find first Some, map unwrap */
+ */
+
+
+
+#[logwrap::logwrap]
+fn next_agree(
+    past_probes: &[LexicalItemToken],
+    so: &SyntacticObject
+) -> Option<(LexicalItemToken, SyntacticObject, SyntacticObject)> {
+    match so {
+        SyntacticObject::Set(set) => {
+            for child in set {
+                if let SyntacticObject::LexicalItemToken(lit) = child {
+                    if is_active(lit) && (!past_probes.contains(lit)) {
+                        let (_, new_set, goals, epp_target) =
+                            unwind_and_agree(lit.clone(), so.clone(), vec![], None);
+                        return Some((lit.clone(), new_set, epp_target.unwrap()));
+                    }
+                }
+            }
+
+            set.iter()
+                .find_map(|child| next_agree(past_probes, child))
+        },
+
+        _ => None,
+    }
+}
+
+
+
+#[logwrap::logwrap]
+fn derive_by_agree<T: Triggers>(stage1: &Stage, stage2: &Stage) -> bool {
+    let Stage { la: la1, w: w1 } = stage1;
+    let Stage { la: la2, w: w2 } = stage2;
+
+    if la1 != la2 {
+        my_debug!("The lexical arrays must be the same.");
+        return false;
+    }
+
+    if w1.0.is_empty() {
+        my_debug!("The first workspace in the pair cannot be empty.");
+        return false;
+    }
+
+    my_debug!("Search for an active probe...");
+    for root in w1.0.iter() {
+        // for so in root.contained_sos(true, true) {
+        //     if let SyntacticObject::LexicalItemToken(lit) = so {
+        //         if (
+        //             lit.li.syn.iter()
+        //                 .any(|synf| synf.is_uninterpretable())
+        //         ) {
+        //             my_debug!("Probe is an active probe: {}", lit);
+        //             my_debug!("Search for an active goal...");
+        //             for so2 in root.contained_sos(true, true) {
+
+        //             }
+        //         }
+        //     }
+        // }
+        let mut past_probes = vec![];
+
+        while let Some((probe, new_root, epp_target)) = next_agree(&past_probes, root) {
+            let mut agreed_w1 = w1.clone();
+            assert!(agreed_w1.0.remove(root));
+            assert!(agreed_w1.0.insert(new_root.clone()));
+
+            //  If EPP, also merge.
+            if probe.li.syn.iter().any(|f| *f == epp_feature!()) {
+                //  The probe must be immediately contained within the root.
+                if root.immediately_contains(&SyntacticObject::LexicalItemToken(probe.clone())) {
+                    if let Ok(merged) = triggered_merge::<T>(new_root.clone(), epp_target.clone(), &agreed_w1) {
+                        assert!(agreed_w1.0.remove(&new_root));
+                        agreed_w1.0.remove(&epp_target);
+                        agreed_w1.0.insert(merged);
+                    }
+                }
+            }
+
+            if agreed_w1 == *w2 {
+                my_info!("This pair of stages is derived by Agree.");
+                return true;
+            }
+
+            past_probes.push(probe);
+        }
+    }
+
+    //  unwind stuff!
+    false
+}
+
+
+
 /// Check if the sequence of stages `stages` is a derivation from the I-language `il`.
 /// 
 /// From Definition 14, C&S 2016, p. 48. The original derivation, given below, defines a derivation with respect to just a lexicon, but since it invokes syntactic operations like Select and Merge, we define it with respect to an I-language, which includes a UG as well as a lexicon.
@@ -618,6 +920,16 @@ pub fn is_derivation<T: Triggers>(il: &ILanguage<T>, stages: &[Stage]) -> bool {
             my_debug!("------------------------------------------------------------");
             my_debug!("Check for Derive-by-Transfer...");
             if derive_by_transfer::<T>(stage1, stage2) {
+                my_debug!("Match!");
+                break true;
+            }
+            my_debug!("No match.");
+
+            //  Derive-by-Agree?
+
+            my_debug!("------------------------------------------------------------");
+            my_debug!("Check for Derive-by-Agree...");
+            if derive_by_agree::<T>(stage1, stage2) {
                 my_debug!("Match!");
                 break true;
             }

@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, feature::SyntacticFeature};
 
 use std::fmt;
 
@@ -348,6 +348,22 @@ impl SyntacticObject {
             .any(|c| {
                 c.immediately_contains(self) && c.contains(parent)
             })
+    }
+
+    pub fn unvalued_and_uninterpretable_features(&self) -> Set<SyntacticFeature> {
+        let mut set = Set::new();
+        for so in self.contained_sos(true, true) {
+            if let SyntacticObject::LexicalItemToken(lit) = so {
+                for synf in lit.li.syn.iter() {
+                    if let SyntacticFeature::Valuable { interpretable, value, .. } = synf {
+                        if (!interpretable) && value.is_none() {
+                            set.insert(synf.clone());
+                        }
+                    }
+                }
+            }
+        }
+        set
     }
 }
 

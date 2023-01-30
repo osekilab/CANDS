@@ -15,6 +15,8 @@ mod basic_select_tests {
 
 #[cfg(test)]
 mod derivck_tests {
+    use std::collections::HashMap;
+
     use crate::deriv::LexicalArray;
     use crate::{f, fset, fvec, set};
     use crate::prelude::*;
@@ -44,6 +46,7 @@ mod derivck_tests {
         let il = ILanguage {
             lex,
             ug,
+            realize_map: HashMap::new()
         };
 
         let stages = vec![
