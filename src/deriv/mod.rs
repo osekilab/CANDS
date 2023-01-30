@@ -521,6 +521,61 @@ fn unwind_and_agree(so: SyntacticObject) -> SyntacticObject {
 
 
 
+/*
+    [Set
+        [LIT probe ]
+        [Set
+            [LIT lit ]
+            [LIT goal ]
+        ]
+    ]
+
+
+    unwind_and_agree(probe, so, past_goals):
+        if !is_active(probe):
+            return so
+
+        match so:
+            case Transferred { .. }:
+                return (probe, so, [])
+
+            case LIT(lit):
+                if is_goal(lit) and lit != probe and match(probe, lit) and goal not in past_goals:
+                    (new_probe, new_goal) = Agree(probe, lit)
+                    return (new_probe, LIT(new_goal), [lit])
+
+            case Set(set):
+                new_set = Set()
+                for child in set:
+                    (probe, new_child, past_goals) = unwind_and_agree(probe, child, past_goals)
+                    new_set.insert(new_child)
+                return (probe, Set(new_set), past_goals)
+
+
+
+    `next_agree(past_probes, root)` should return a root that is obtained by applying Agree to a probe and goal(s).  It will return None if Agree cannot be applied anywhere in the provided root.  It will not apply Agree to a probe if the probe is found in past_probes.
+
+    next_agree(past_probes, so):
+        match so:
+            case LIT(..):
+                return None
+
+            case Transferred { .. }:
+                return None
+
+            case Set(set):
+                for child in set:
+                    if let LIT(lit) = child:
+                        if is_probe(lit) lit is not in past_probes:
+                            newset = unwind_and_agree(probe, so, [])
+
+                set.iter()
+                    .map(|child| next_agree(past_probes, child))
+                    /* find first Some, map unwrap */
+ */
+
+
+
 #[logwrap::logwrap]
 fn derive_by_agree(stage1: &Stage, stage2: &Stage) -> bool {
     let Stage { la: la1, w: w1 } = stage1;
