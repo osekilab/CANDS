@@ -340,6 +340,15 @@ pub fn cyclic_transfer<T: Triggers>(so: SyntacticObject, w: &Workspace) -> Resul
 
 
 
+pub fn is_defective(probe: &LexicalItemToken) -> bool {
+    !(
+        (probe.li.syn.iter().any(|f| f.is_person())) &&
+        (probe.li.syn.iter().any(|f| f.is_number()))
+    )
+}
+
+
+
 pub fn agree(probe: &LexicalItemToken, goal: &LexicalItemToken) -> (LexicalItemToken, LexicalItemToken) {
     let new_probe_syn = probe.li.syn.iter()
         .map(|synf| match synf {
@@ -394,10 +403,7 @@ pub fn agree(probe: &LexicalItemToken, goal: &LexicalItemToken) -> (LexicalItemT
         .collect();
 
     //  Defective iff not phi-complete.
-    let probe_is_defective = !(
-        (probe.li.syn.iter().any(|f| f.is_person())) &&
-        (probe.li.syn.iter().any(|f| f.is_number()))
-    );
+    let probe_is_defective = is_defective(probe);
 
     let new_goal_syn = goal.li.syn.iter()
         .map(|synf| match synf {
@@ -423,9 +429,9 @@ pub fn agree(probe: &LexicalItemToken, goal: &LexicalItemToken) -> (LexicalItemT
                         //  Otherwise...
                         else {
                             //  Try to find the value V2 of some feature F2 in
-                            //  G.syn such that F2 and F have the same type, and F2
+                            //  P.syn such that F2 and F have the same type, and F2
                             //  is valued.
-                            match goal.li.syn.iter().find_map(|synf2| {
+                            match probe.li.syn.iter().find_map(|synf2| {
                                 match synf2 {
                                     SyntacticFeature::Valuable {
                                         feature: feature2,

@@ -5,7 +5,7 @@ pub mod so;
 
 
 use crate::feature::SyntacticFeature;
-use crate::ops::agree;
+use crate::ops::{agree, is_defective};
 use crate::prelude::*;
 
 use derive_more::{ Deref, DerefMut };
@@ -25,13 +25,13 @@ use std::fmt;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct UniversalGrammar<T: Triggers> {
     pub phon_f:     Set<Feature>,
-    pub syn_f:      Set<Feature>,
+    pub syn_f:      Set<SyntacticFeature>,
     pub sem_f:      Set<Feature>,
     phantom:        PhantomData<T>,
 }
 
 impl<T: Triggers> UniversalGrammar<T> {
-    pub fn new(phon_f: Set<Feature>, syn_f: Set<Feature>, sem_f: Set<Feature>) -> Self {
+    pub fn new(phon_f: Set<Feature>, syn_f: Set<SyntacticFeature>, sem_f: Set<Feature>) -> Self {
         Self {
             phon_f, syn_f, sem_f, phantom: PhantomData::default()
         }
@@ -715,15 +715,27 @@ fn unwind_and_agree(
 fn next_agree(
     past_probes: &[LexicalItemToken],
     so: &SyntacticObject
-) -> Option<(LexicalItemToken, SyntacticObject, SyntacticObject)> {
+) -> Option<(LexicalItemToken, SyntacticObject, Option<SyntacticObject>)> {
     match so {
         SyntacticObject::Set(set) => {
             for child in set {
                 if let SyntacticObject::LexicalItemToken(lit) = child {
                     if is_active(lit) && (!past_probes.contains(lit)) {
-                        let (_, new_set, goals, epp_target) =
+                        let (new_probe, new_set, past_goals, epp_target) =
                             unwind_and_agree(lit.clone(), so.clone(), vec![], None);
-                        return Some((lit.clone(), new_set, epp_target.unwrap()));
+                        my_debug!("Agree can apply with:");
+                        my_debug!(" -  Probe (before Agree): {}", lit);
+                        my_debug!(" -  Probe is defective? {:?}", is_defective(lit));
+                        my_debug!(" -  Probe (after Agree): {}", new_probe);
+                        match epp_target.as_ref() {
+                            Some(epp_target) => {
+                                my_debug!(" -  Potential EPP target: {}", SOPrefixFormatter::new(epp_target, 26));
+                            },
+                            None => {
+                                my_debug!(" -  (No potential EPP target)");
+                            },
+                        }
+                        return Some((lit.clone(), new_set, epp_target));
                     }
                 }
             }
@@ -753,37 +765,39 @@ fn derive_by_agree<T: Triggers>(stage1: &Stage, stage2: &Stage) -> bool {
         return false;
     }
 
-    my_debug!("Search for an active probe...");
+    my_debug!("Iterating over the roots...");
     for root in w1.0.iter() {
-        // for so in root.contained_sos(true, true) {
-        //     if let SyntacticObject::LexicalItemToken(lit) = so {
-        //         if (
-        //             lit.li.syn.iter()
-        //                 .any(|synf| synf.is_uninterpretable())
-        //         ) {
-        //             my_debug!("Probe is an active probe: {}", lit);
-        //             my_debug!("Search for an active goal...");
-        //             for so2 in root.contained_sos(true, true) {
-
-        //             }
-        //         }
-        //     }
-        // }
         let mut past_probes = vec![];
 
         while let Some((probe, new_root, epp_target)) = next_agree(&past_probes, root) {
+            my_debug!("Trying to match W2 with derive-by-Agree(W1)...");
+            my_debug!(" -  Root (before Agree): {}", SOPrefixFormatter::new(root, 25));
+            my_debug!(" -  Root (after Agree): {}", SOPrefixFormatter::new(&new_root, 24));
+            match epp_target.as_ref() {
+                Some(epp_target) => {
+                    my_debug!(" -  Potential EPP target: {}", SOPrefixFormatter::new(epp_target, 26));
+                },
+                None => {
+                    my_debug!(" -  (No potential EPP target)");
+                },
+            }
+
             let mut agreed_w1 = w1.clone();
             assert!(agreed_w1.0.remove(root));
             assert!(agreed_w1.0.insert(new_root.clone()));
 
+            my_debug!("The new workspace would be: {}", agreed_w1);
+
             //  If EPP, also merge.
-            if probe.li.syn.iter().any(|f| *f == epp_feature!()) {
-                //  The probe must be immediately contained within the root.
-                if root.immediately_contains(&SyntacticObject::LexicalItemToken(probe.clone())) {
-                    if let Ok(merged) = triggered_merge::<T>(new_root.clone(), epp_target.clone(), &agreed_w1) {
-                        assert!(agreed_w1.0.remove(&new_root));
-                        agreed_w1.0.remove(&epp_target);
-                        agreed_w1.0.insert(merged);
+            if let Some(epp_target) = epp_target {
+                if probe.li.syn.iter().any(|f| *f == epp_feature!()) {
+                    //  The probe must be immediately contained within the root.
+                    if root.immediately_contains(&SyntacticObject::LexicalItemToken(probe.clone())) {
+                        if let Ok(merged) = triggered_merge::<T>(new_root.clone(), epp_target.clone(), &agreed_w1) {
+                            assert!(agreed_w1.0.remove(&new_root));
+                            agreed_w1.0.remove(&epp_target);
+                            agreed_w1.0.insert(merged);
+                        }
                     }
                 }
             }
@@ -832,7 +846,7 @@ pub fn is_derivation<T: Triggers>(il: &ILanguage<T>, stages: &[Stage]) -> bool {
     let stage1 = &stages[0];
     let Stage { la: la1, w: w1 } = stage1;
 
-    let ILanguage { lex, ug, .. } = il;
+    let ILanguage { lex, .. } = il;
 
     for lit in la1.0.iter() {
         let LexicalItemToken { li, .. } = lit;

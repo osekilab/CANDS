@@ -132,6 +132,40 @@ pub(crate) use f;
 
 
 
+/// Macro to generate a feature.
+///
+/// # Example
+///
+/// ```
+/// cands::f!("wh")
+/// ```
+#[macro_export]
+macro_rules! synf {
+    ($literal:expr) => {
+        SyntacticFeature::Normal(Feature::new(String::from($literal)))
+    };
+
+    ($interpretable:expr; $feature:expr; $value:expr) => {
+        SyntacticFeature::Valuable {
+            interpretable: $interpretable,
+            feature: f!($feature),
+            value: Some(String::from($value)),
+        }
+    };
+
+    ($interpretable:expr; $feature:expr; _) => {
+        SyntacticFeature::Valuable {
+            interpretable: $interpretable,
+            feature: f!($feature),
+            value: None,
+        }
+    }
+}
+
+pub(crate) use synf;
+
+
+
 /// Macro to generate a feature set.
 /// 
 /// # Example
@@ -149,6 +183,26 @@ macro_rules! fset {
 }
 
 pub(crate) use fset;
+
+
+
+/// Macro to generate a feature set.
+/// 
+/// # Example
+/// 
+/// ```
+/// fset!("n", "+voiced", "EPP")
+/// ```
+#[macro_export]
+macro_rules! synfset {
+    ($($literal:expr),*) => {
+        {
+            set!( $(synf!($literal)),* )
+        }
+    };
+}
+
+pub(crate) use synfset;
 
 
 
