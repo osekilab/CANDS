@@ -612,7 +612,8 @@ fn unwind_and_agree(
                 (!past_goals.contains(&lit))
             {
                 let (new_probe, new_goal) = agree(&probe, &lit);
-                epp_target = epp_target.or_else(|| Some(SyntacticObject::LexicalItemToken(lit.clone())));
+                //  The EPP target should be the new goal.
+                epp_target = epp_target.or_else(|| Some(SyntacticObject::LexicalItemToken(new_goal.clone())));
                 //  We add the old goal to `past_goals`, because traces of the
                 //  goal are identical to the old goal, not necessarily to the
                 //  new goal (e.g. consider goal = Case-marked DP)
@@ -649,7 +650,8 @@ fn unwind_and_agree(
                     {
                         let (new_probe, new_goal) = agree(&probe, &lit);
                         probe = new_probe;
-                        epp_target = epp_target.or_else(|| Some(SyntacticObject::LexicalItemToken(lit.clone())));
+                        //  The EPP target should be the new goal.
+                        epp_target = epp_target.or_else(|| Some(SyntacticObject::LexicalItemToken(new_goal.clone())));
                         //  We add the old goal to `past_goals`, because traces of the
                         //  goal are identical to the old goal, not necessarily to the
                         //  new goal (e.g. consider goal = Case-marked DP)
@@ -786,14 +788,20 @@ fn derive_by_agree<T: Triggers>(stage1: &Stage, stage2: &Stage) -> bool {
             assert!(agreed_w1.0.remove(root));
             assert!(agreed_w1.0.insert(new_root.clone()));
 
-            my_debug!("The new workspace would be: {}", agreed_w1);
-
             //  If EPP, also merge.
             if let Some(epp_target) = epp_target {
+                my_debug!("There is a potential EPP target.  Does probe have EPP?");
+
                 if probe.li.syn.iter().any(|f| *f == epp_feature!()) {
+                    my_debug!("Probe has EPP.  Does the root immediately contain the probe?");
+
                     //  The probe must be immediately contained within the root.
                     if root.immediately_contains(&SyntacticObject::LexicalItemToken(probe.clone())) {
+                        my_debug!("Yes.  Checking for triggered Merge(root, target)...");
+
                         if let Ok(merged) = triggered_merge::<T>(new_root.clone(), epp_target.clone(), &agreed_w1) {
+                            my_debug!("Merge (root, target) = {}", SOPrefixFormatter::new(&merged, 23));
+
                             assert!(agreed_w1.0.remove(&new_root));
                             agreed_w1.0.remove(&epp_target);
                             agreed_w1.0.insert(merged);
@@ -801,6 +809,8 @@ fn derive_by_agree<T: Triggers>(stage1: &Stage, stage2: &Stage) -> bool {
                     }
                 }
             }
+
+            my_debug!("The new workspace would be: {}", agreed_w1);
 
             if agreed_w1 == *w2 {
                 my_info!("This pair of stages is derived by Agree.");
