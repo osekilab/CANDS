@@ -120,18 +120,7 @@ fn test() {
         )
     };
 
-    let Pres_agreed1 = || {
-        make_empty(
-            set!(
-                synf!("T"), synf!("=Aux"), synf!(false; "Person"; "3"),
-                synf!(false; "Number"; _), synf!(false; "Case"; "nom"),
-                synf!("EPP")
-            ),
-            fset!("Pres")
-        )
-    };
-
-    let Pres_agreed2 = || {
+    let Pres_agreed = || {
         make_empty(
             set!(
                 synf!("T"), synf!("=Aux"), synf!(false; "Person"; "3"),
@@ -398,6 +387,657 @@ fn test() {
                             ),
                         ),
                     ),
+                )
+            ))
+        },
+
+        //  Select be
+        Stage {
+            la: LexicalArray::new(set!(
+                lit!(def_to()),
+                lit!(likely()),
+                lit!(are()),
+                lit!(Pres()),
+                lit!(C())
+            )),
+            w: Workspace::new(set!(
+                so!(lit!(be())),
+                so!(
+                    so!(lit!(vpass())),
+                    so!(
+                        so!(lit!(awarded())),
+                        so!(
+                            so!(lit!(D())),
+                            so!(
+                                so!(lit!(several())),
+                                so!(lit!(prizes())),
+                            ),
+                        ),
+                    ),
+                )
+            ))
+        },
+
+        //  Merge (be, vP)
+        Stage {
+            la: LexicalArray::new(set!(
+                lit!(def_to()),
+                lit!(likely()),
+                lit!(are()),
+                lit!(Pres()),
+                lit!(C())
+            )),
+            w: Workspace::new(set!(
+                so!(
+                    so!(lit!(be())),
+                    so!(
+                        so!(lit!(vpass())),
+                        so!(
+                            so!(lit!(awarded())),
+                            so!(
+                                so!(lit!(D())),
+                                so!(
+                                    so!(lit!(several())),
+                                    so!(lit!(prizes())),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            ))
+        },
+
+        //  Select T_def
+        Stage {
+            la: LexicalArray::new(set!(
+                lit!(likely()),
+                lit!(are()),
+                lit!(Pres()),
+                lit!(C())
+            )),
+            w: Workspace::new(set!(
+                so!(lit!(def_to())),
+                so!(
+                    so!(lit!(be())),
+                    so!(
+                        so!(lit!(vpass())),
+                        so!(
+                            so!(lit!(awarded())),
+                            so!(
+                                so!(lit!(D())),
+                                so!(
+                                    so!(lit!(several())),
+                                    so!(lit!(prizes())),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            ))
+        },
+
+        //  Merge (T_def, AuxP)
+        Stage {
+            la: LexicalArray::new(set!(
+                lit!(likely()),
+                lit!(are()),
+                lit!(Pres()),
+                lit!(C())
+            )),
+            w: Workspace::new(set!(
+                so!(
+                    so!(lit!(def_to())),
+                    so!(
+                        so!(lit!(be())),
+                        so!(
+                            so!(lit!(vpass())),
+                            so!(
+                                so!(lit!(awarded())),
+                                so!(
+                                    so!(lit!(D())),
+                                    so!(
+                                        so!(lit!(several())),
+                                        so!(lit!(prizes())),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            ))
+        },
+
+        //  T_def agrees with several prizes
+        //  Several prizes moves to [Spec; T_def]
+        Stage {
+            la: LexicalArray::new(set!(
+                lit!(likely()),
+                lit!(are()),
+                lit!(Pres()),
+                lit!(C())
+            )),
+            w: Workspace::new(set!(
+                so!(
+                    so!(
+                        so!(lit!(D())),
+                        so!(
+                            so!(lit!(several())),
+                            so!(lit!(prizes())),
+                        ),
+                    ),
+                    so!(
+                        so!(lit!(def_to_agreed())),
+                        so!(
+                            so!(lit!(be())),
+                            so!(
+                                so!(lit!(vpass())),
+                                so!(
+                                    so!(lit!(awarded())),
+                                    so!(
+                                        so!(lit!(D())),
+                                        so!(
+                                            so!(lit!(several())),
+                                            so!(lit!(prizes())),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            ))
+        },
+
+        //  Select likely
+        Stage {
+            la: LexicalArray::new(set!(
+                lit!(are()),
+                lit!(Pres()),
+                lit!(C())
+            )),
+            w: Workspace::new(set!(
+                so!(lit!(likely())),
+                so!(
+                    so!(
+                        so!(lit!(D())),
+                        so!(
+                            so!(lit!(several())),
+                            so!(lit!(prizes())),
+                        ),
+                    ),
+                    so!(
+                        so!(lit!(def_to_agreed())),
+                        so!(
+                            so!(lit!(be())),
+                            so!(
+                                so!(lit!(vpass())),
+                                so!(
+                                    so!(lit!(awarded())),
+                                    so!(
+                                        so!(lit!(D())),
+                                        so!(
+                                            so!(lit!(several())),
+                                            so!(lit!(prizes())),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            ))
+        },
+
+        //  Merge (likely, TP)
+        Stage {
+            la: LexicalArray::new(set!(
+                lit!(are()),
+                lit!(Pres()),
+                lit!(C())
+            )),
+            w: Workspace::new(set!(
+                so!(
+                    so!(lit!(likely())),
+                    so!(
+                        so!(
+                            so!(lit!(D())),
+                            so!(
+                                so!(lit!(several())),
+                                so!(lit!(prizes())),
+                            ),
+                        ),
+                        so!(
+                            so!(lit!(def_to_agreed())),
+                            so!(
+                                so!(lit!(be())),
+                                so!(
+                                    so!(lit!(vpass())),
+                                    so!(
+                                        so!(lit!(awarded())),
+                                        so!(
+                                            so!(lit!(D())),
+                                            so!(
+                                                so!(lit!(several())),
+                                                so!(lit!(prizes())),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            ))
+        },
+
+        //  Select are
+        Stage {
+            la: LexicalArray::new(set!(
+                lit!(Pres()),
+                lit!(C())
+            )),
+            w: Workspace::new(set!(
+                so!(lit!(are())),
+                so!(
+                    so!(lit!(likely())),
+                    so!(
+                        so!(
+                            so!(lit!(D())),
+                            so!(
+                                so!(lit!(several())),
+                                so!(lit!(prizes())),
+                            ),
+                        ),
+                        so!(
+                            so!(lit!(def_to_agreed())),
+                            so!(
+                                so!(lit!(be())),
+                                so!(
+                                    so!(lit!(vpass())),
+                                    so!(
+                                        so!(lit!(awarded())),
+                                        so!(
+                                            so!(lit!(D())),
+                                            so!(
+                                                so!(lit!(several())),
+                                                so!(lit!(prizes())),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            ))
+        },
+
+        //  Merge (are, AP)
+        Stage {
+            la: LexicalArray::new(set!(
+                lit!(Pres()),
+                lit!(C())
+            )),
+            w: Workspace::new(set!(
+                so!(
+                    so!(lit!(are())),
+                    so!(
+                        so!(lit!(likely())),
+                        so!(
+                            so!(
+                                so!(lit!(D())),
+                                so!(
+                                    so!(lit!(several())),
+                                    so!(lit!(prizes())),
+                                ),
+                            ),
+                            so!(
+                                so!(lit!(def_to_agreed())),
+                                so!(
+                                    so!(lit!(be())),
+                                    so!(
+                                        so!(lit!(vpass())),
+                                        so!(
+                                            so!(lit!(awarded())),
+                                            so!(
+                                                so!(lit!(D())),
+                                                so!(
+                                                    so!(lit!(several())),
+                                                    so!(lit!(prizes())),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            ))
+        },
+
+        //  Select Pres
+        Stage {
+            la: LexicalArray::new(set!(
+                lit!(C())
+            )),
+            w: Workspace::new(set!(
+                so!(lit!(Pres())),
+                so!(
+                    so!(lit!(are())),
+                    so!(
+                        so!(lit!(likely())),
+                        so!(
+                            so!(
+                                so!(lit!(D())),
+                                so!(
+                                    so!(lit!(several())),
+                                    so!(lit!(prizes())),
+                                ),
+                            ),
+                            so!(
+                                so!(lit!(def_to_agreed())),
+                                so!(
+                                    so!(lit!(be())),
+                                    so!(
+                                        so!(lit!(vpass())),
+                                        so!(
+                                            so!(lit!(awarded())),
+                                            so!(
+                                                so!(lit!(D())),
+                                                so!(
+                                                    so!(lit!(several())),
+                                                    so!(lit!(prizes())),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            ))
+        },
+
+        //  Merge (Pres, AuxP)
+        Stage {
+            la: LexicalArray::new(set!(
+                lit!(C())
+            )),
+            w: Workspace::new(set!(
+                so!(
+                    so!(lit!(Pres())),
+                    so!(
+                        so!(lit!(are())),
+                        so!(
+                            so!(lit!(likely())),
+                            so!(
+                                so!(
+                                    so!(lit!(D())),
+                                    so!(
+                                        so!(lit!(several())),
+                                        so!(lit!(prizes())),
+                                    ),
+                                ),
+                                so!(
+                                    so!(lit!(def_to_agreed())),
+                                    so!(
+                                        so!(lit!(be())),
+                                        so!(
+                                            so!(lit!(vpass())),
+                                            so!(
+                                                so!(lit!(awarded())),
+                                                so!(
+                                                    so!(lit!(D())),
+                                                    so!(
+                                                        so!(lit!(several())),
+                                                        so!(lit!(prizes())),
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            ))
+        },
+
+        //  Pres agrees with prizes.
+        //  Several prizes move to [Spec; T], and its Case gets checked.
+        //  Note: Pres could have agreed with the lower prizes instead of the higher prizes, and the derivation would still work!
+        Stage {
+            la: LexicalArray::new(set!(
+                lit!(C())
+            )),
+            w: Workspace::new(set!(
+                so!(
+                    so!(
+                        so!(lit!(D())),
+                        so!(
+                            so!(lit!(several())),
+                            so!(lit!(prizes_agreed())),
+                        ),
+                    ),
+                    so!(
+                        so!(lit!(Pres_agreed())),
+                        so!(
+                            so!(lit!(are())),
+                            so!(
+                                so!(lit!(likely())),
+                                so!(
+                                    so!(
+                                        so!(lit!(D())),
+                                        so!(
+                                            so!(lit!(several())),
+                                            so!(lit!(prizes_agreed())),
+                                        ),
+                                    ),
+                                    so!(
+                                        so!(lit!(def_to_agreed())),
+                                        so!(
+                                            so!(lit!(be())),
+                                            so!(
+                                                so!(lit!(vpass())),
+                                                so!(
+                                                    so!(lit!(awarded())),
+                                                    so!(
+                                                        so!(lit!(D())),
+                                                        so!(
+                                                            so!(lit!(several())),
+                                                            so!(lit!(prizes_agreed())),
+                                                        ),
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            ))
+        },
+
+        //  Select C
+        Stage {
+            la: LexicalArray::new(set!()),
+            w: Workspace::new(set!(
+                so!(lit!(C())),
+                so!(
+                    so!(
+                        so!(lit!(D())),
+                        so!(
+                            so!(lit!(several())),
+                            so!(lit!(prizes_agreed())),
+                        ),
+                    ),
+                    so!(
+                        so!(lit!(Pres_agreed())),
+                        so!(
+                            so!(lit!(are())),
+                            so!(
+                                so!(lit!(likely())),
+                                so!(
+                                    so!(
+                                        so!(lit!(D())),
+                                        so!(
+                                            so!(lit!(several())),
+                                            so!(lit!(prizes_agreed())),
+                                        ),
+                                    ),
+                                    so!(
+                                        so!(lit!(def_to_agreed())),
+                                        so!(
+                                            so!(lit!(be())),
+                                            so!(
+                                                so!(lit!(vpass())),
+                                                so!(
+                                                    so!(lit!(awarded())),
+                                                    so!(
+                                                        so!(lit!(D())),
+                                                        so!(
+                                                            so!(lit!(several())),
+                                                            so!(lit!(prizes_agreed())),
+                                                        ),
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            ))
+        },
+
+        //  Merge (C, TP)
+        Stage {
+            la: LexicalArray::new(set!()),
+            w: Workspace::new(set!(
+                so!(
+                    so!(lit!(C())),
+                    so!(
+                        so!(
+                            so!(lit!(D())),
+                            so!(
+                                so!(lit!(several())),
+                                so!(lit!(prizes_agreed())),
+                            ),
+                        ),
+                        so!(
+                            so!(lit!(Pres_agreed())),
+                            so!(
+                                so!(lit!(are())),
+                                so!(
+                                    so!(lit!(likely())),
+                                    so!(
+                                        so!(
+                                            so!(lit!(D())),
+                                            so!(
+                                                so!(lit!(several())),
+                                                so!(lit!(prizes_agreed())),
+                                            ),
+                                        ),
+                                        so!(
+                                            so!(lit!(def_to_agreed())),
+                                            so!(
+                                                so!(lit!(be())),
+                                                so!(
+                                                    so!(lit!(vpass())),
+                                                    so!(
+                                                        so!(lit!(awarded())),
+                                                        so!(
+                                                            so!(lit!(D())),
+                                                            so!(
+                                                                so!(lit!(several())),
+                                                                so!(lit!(prizes_agreed())),
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            ))
+        },
+
+        //  Transfer(CP, CP)
+        //  Old comment (no longer applies):
+        //  This fails because in the chain of several prizes which consists of
+        //  three copies, the first and second copies are identical (both are
+        //  Case-checked), while the third copy is not identical to the two
+        //  others (not Case-checked).  This causes the third copy to be
+        //  spelled out, because it is final.
+        Stage {
+            la: LexicalArray::new(set!()),
+            w: Workspace::new(set!(
+                so!(
+                    so!(
+                        so!(lit!(C())),
+                        so!(
+                            so!(
+                                so!(lit!(D())),
+                                so!(
+                                    so!(lit!(several())),
+                                    so!(lit!(prizes_agreed())),
+                                ),
+                            ),
+                            so!(
+                                so!(lit!(Pres_agreed())),
+                                so!(
+                                    so!(lit!(are())),
+                                    so!(
+                                        so!(lit!(likely())),
+                                        so!(
+                                            so!(
+                                                so!(lit!(D())),
+                                                so!(
+                                                    so!(lit!(several())),
+                                                    so!(lit!(prizes_agreed())),
+                                                ),
+                                            ),
+                                            so!(
+                                                so!(lit!(def_to_agreed())),
+                                                so!(
+                                                    so!(lit!(be())),
+                                                    so!(
+                                                        so!(lit!(vpass())),
+                                                        so!(
+                                                            so!(lit!(awarded())),
+                                                            so!(
+                                                                so!(lit!(D())),
+                                                                so!(
+                                                                    so!(lit!(several())),
+                                                                    so!(lit!(prizes_agreed())),
+                                                                ),
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ) =>
+                    fvec!("several", "prizes", "are", "likely", "to", "be", "awarded") ;
+                    fset!(
+                        "prizes", "several", "D", "awarded", "v", "be", "to",
+                        "likely", "are", "Pres", "C"
+                    )
                 )
             ))
         },

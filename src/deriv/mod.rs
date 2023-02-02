@@ -599,6 +599,25 @@ fn matching_probe_goal(probe: &LexicalItemToken, goal: &LexicalItemToken) -> boo
 
 
 
+fn update_goal_copies(so: SyntacticObject, old_goal: &SyntacticObject, new_goal: &SyntacticObject) -> SyntacticObject {
+    if so == *old_goal {
+        return new_goal.clone();
+    }
+
+    match so {
+        SyntacticObject::Set(set) => {
+            let new_set = set.into_iter()
+                .map(|child| update_goal_copies(child, old_goal, new_goal))
+                .collect();
+            SyntacticObject::Set(new_set)
+        },
+
+        _ => so,
+    }
+}
+
+
+
 #[logwrap::logwrap]
 fn unwind_and_agree(
     mut probe: LexicalItemToken,
@@ -648,7 +667,10 @@ fn unwind_and_agree(
                                             return Some(SyntacticObject::LexicalItemToken(new_probe.clone()));
                                         }
                                     }
-                                    Some(child2.clone())
+                                    
+                                    //  We have to make sure the old goal copies in other branches have been updated to the new goal
+                                    //  This is necessary to pass chomsky_2001_4bii
+                                    Some(update_goal_copies(child2.clone(), child, &SyntacticObject::LexicalItemToken(new_goal.clone())))
                                 }
                                 else {
                                     None
@@ -682,7 +704,10 @@ fn unwind_and_agree(
                                             return Some(SyntacticObject::LexicalItemToken(new_probe.clone()));
                                         }
                                     }
-                                    Some(child2.clone())
+                                    
+                                    //  We have to make sure the old goal copies in other branches have been updated to the new goal
+                                    //  This is necessary to pass chomsky_2001_4bii
+                                    Some(update_goal_copies(child2.clone(), &SyntacticObject::LexicalItemToken(old_goal.clone()), &SyntacticObject::LexicalItemToken(new_goal.clone())))
                                 }
                                 else {
                                     None
@@ -796,6 +821,12 @@ fn next_agree(
 
 
 
+fn pied_pipes_to(small: &SyntacticObject, maybe_larger: &SyntacticObject) -> bool {
+    (small == maybe_larger) || maybe_larger.contains(small)
+}
+
+
+
 #[logwrap::logwrap]
 fn derive_by_agree<T: Triggers>(stage1: &Stage, stage2: &Stage) -> bool {
     let Stage { la: la1, w: w1 } = stage1;
@@ -832,17 +863,34 @@ fn derive_by_agree<T: Triggers>(stage1: &Stage, stage2: &Stage) -> bool {
 
                     //  The probe must be immediately contained within the root.
                     if root.immediately_contains(&SyntacticObject::LexicalItemToken(probe.clone())) {
-                        my_debug!("Yes.  Checking for triggered Merge(root, target)...");
+                        my_debug!("Yes.  Checking for triggered Merge (root, target)...");
 
-                        if let Ok(merged) = triggered_merge::<T>(new_root.clone(), new_goal.clone(), &agreed_w1) {
-                            my_debug!("Merge (root, target) = {}", SOPrefixFormatter::new(&merged, 23));
+                        for so in new_root.contained_sos(true, true) {
+                            if pied_pipes_to(&new_goal, so) {
+                                if let Ok(merged) = triggered_merge::<T>(new_root.clone(), so.clone(), &agreed_w1) {
+                                    my_debug!("Target can be: {}", SOPrefixFormatter::new(so, 15));
+                                    my_debug!("Merge (root, target) = {}", SOPrefixFormatter::new(&merged, 23));
 
-                            assert!(agreed_w1.0.remove(&new_root));
-                            agreed_w1.0.remove(&new_goal);
-                            agreed_w1.0.insert(merged);
+                                    let mut agreed_w1 = agreed_w1.clone();
+                                    assert!(agreed_w1.0.remove(&new_root));
+                                    agreed_w1.0.remove(so);
+                                    agreed_w1.0.insert(merged);
+    
+                                    my_debug!("The new workspace would be: {}", agreed_w1);
+
+                                    if agreed_w1 == *w2 {
+                                        my_info!("This pair of stages is derived by Agree.");
+                                        return true;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
+
+                my_debug!("Either the probe didn't have EPP, or...");
+                my_debug!("    the probe is not immediately contained under the root, or...");
+                my_debug!("        there was no pied-piped goal that would move to [Spec; probe].");
     
                 my_debug!("The new workspace would be: {}", agreed_w1);
     
