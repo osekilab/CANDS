@@ -1,5 +1,7 @@
 //! A bunch of tests.
 
+use crate::prelude::{Set, SyntacticFeature, Feature, LexicalItem};
+
 #[cfg(test)]
 mod macros;
 
@@ -20,6 +22,28 @@ mod basic_select_tests {
 
 fn init_logger() {
     let _ = env_logger::builder().is_test(true).try_init();
+}
+
+
+
+fn make_word(syn: Set<SyntacticFeature>, phon: Vec<Feature>) -> LexicalItem {
+    LexicalItem::new(
+        phon.clone().into_iter().collect(),
+        syn,
+        phon,
+        None
+    )
+}
+
+
+
+fn make_empty(syn: Set<SyntacticFeature>, sem: Set<Feature>) -> LexicalItem {
+    LexicalItem::new(
+        sem,
+        syn,
+        vec![],
+        None
+    )
 }
 
 

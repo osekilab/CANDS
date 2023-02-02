@@ -85,6 +85,20 @@ impl SyntacticFeature {
         }
     }
 
+    pub fn is_valued(&self) -> bool {
+        match self {
+            SyntacticFeature::Valuable { value: Some(_), .. } => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_unvalued(&self) -> bool {
+        match self {
+            SyntacticFeature::Valuable { value: None, .. } => true,
+            _ => false,
+        }
+    }
+
     pub fn is_person(&self) -> bool {
         match self {
             SyntacticFeature::Valuable { feature, .. } =>

@@ -1,3 +1,11 @@
+#[cfg(test)]
+mod chomsky_2001_4bi;
+
+#[cfg(test)]
+mod chomsky_2001_4bii;
+
+
+
 use std::collections::HashMap;
 
 use crate::deriv::LexicalArray;

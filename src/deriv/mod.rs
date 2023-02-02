@@ -581,10 +581,19 @@ fn is_active(lit: &LexicalItemToken) -> bool {
 
 
 
+//  Try and keep this -- you will fail chomsky_2001_4bi.
+//  Because matrix T tries to Agree with embedded T_def.
+// fn matching_probe_goal(probe: &LexicalItemToken, goal: &LexicalItemToken) -> bool {
+//     probe.li.syn.iter()
+//         .any(|f| {
+//             goal.li.syn.iter().any(|f2| f.matches(f2))
+//         })
+// }
 fn matching_probe_goal(probe: &LexicalItemToken, goal: &LexicalItemToken) -> bool {
     probe.li.syn.iter()
         .any(|f| {
-            goal.li.syn.iter().any(|f2| f.matches(f2))
+            f.is_unvalued() &&
+            goal.li.syn.iter().any(|f2| f.matches(f2) && f2.is_valued())
         })
 }
 
@@ -594,130 +603,102 @@ fn matching_probe_goal(probe: &LexicalItemToken, goal: &LexicalItemToken) -> boo
 fn unwind_and_agree(
     mut probe: LexicalItemToken,
     so: SyntacticObject,
-    mut past_goals: Vec<LexicalItemToken>,
-    mut epp_target: Option<SyntacticObject>,
-) -> Vec<(LexicalItemToken, SyntacticObject, Vec<LexicalItemToken>, Option<SyntacticObject>)> {
+    under: &SyntacticObject,
+) -> Vec<(LexicalItemToken, LexicalItemToken, LexicalItemToken, SyntacticObject)>
+/* [ ( new probe, new goal, old goal, new SO ) ] */
+{
     if !is_active(&probe) {
-        return vec![ (probe, so, past_goals, epp_target) ];
+        return vec![];
     }
 
-    match so {
-        SyntacticObject::LexicalItemToken(lit) => {
-            // if is_goal(lit) and lit != probe and match(probe, lit) and goal not in past_goals:
-            //     (new_probe, new_goal) = Agree(probe, lit)
-            //     return (new_probe, LIT(new_goal), [lit])
-            if  is_active(&lit) &&
-                (lit != probe) &&
-                matching_probe_goal(&probe, &lit) &&
-                (!past_goals.contains(&lit))
-            {
-                let (new_probe, new_goal) = agree(&probe, &lit);
-                //  The EPP target should be the new goal.
-                epp_target = epp_target.or_else(|| Some(SyntacticObject::LexicalItemToken(new_goal.clone())));
-                //  We add the old goal to `past_goals`, because traces of the
-                //  goal are identical to the old goal, not necessarily to the
-                //  new goal (e.g. consider goal = Case-marked DP)
-                past_goals.push(lit);
-                vec![ (new_probe, SyntacticObject::LexicalItemToken(new_goal), past_goals, epp_target) ]
-            }
-            else {
-                vec![ (probe, SyntacticObject::LexicalItemToken(lit), past_goals, epp_target) ]
-            }
-        },
-
+    match &so {
         SyntacticObject::Set(set) => {
-            let mut new_set = Set::new();
-            let mut unwind_children = vec![];
-            let mut put_probe_back_in = false;
-            let mut probe_is_still_active = true;
+            //  Non-goal children.
+            let mut non_goal_children = vec![];
 
-            for child in set.into_iter() {
-                probe_is_still_active = is_active(&probe);
-                if !probe_is_still_active {
-                    new_set.insert(child);
-                    continue;
-                }
+            let mut results = vec![];
 
+            for child in set.iter() {
                 let mut curr_child_is_goal = false;
 
-                if let SyntacticObject::LexicalItemToken(lit) = &child {
-                    if *lit == probe {
-                        put_probe_back_in = true;
-                        continue;
-                    }
-
+                if let SyntacticObject::LexicalItemToken(lit) = child {
                     if  is_active(&lit) &&
-                        matching_probe_goal(&probe, &lit) &&
-                        (!past_goals.contains(&lit))
+                        (*lit != probe) &&
+                        matching_probe_goal(&probe, &lit)
                     {
+                        my_debug!("Found a matching goal!");
+                        my_debug!("Probe: {}", probe);
+                        my_debug!("Goal:  {}", lit);
+
+                        if !child.is_final(&so, under) {
+                            my_debug!("Goal is not final, skip...");
+                            continue;
+                        }
+
                         let (new_probe, new_goal) = agree(&probe, &lit);
-                        probe = new_probe;
-                        //  The EPP target should be the new goal.
-                        epp_target = epp_target.or_else(|| Some(SyntacticObject::LexicalItemToken(new_goal.clone())));
-                        //  We add the old goal to `past_goals`, because traces of the
-                        //  goal are identical to the old goal, not necessarily to the
-                        //  new goal (e.g. consider goal = Case-marked DP)
-                        past_goals.push(lit.clone());
                         curr_child_is_goal = true;
-                        new_set.insert(SyntacticObject::LexicalItemToken(new_goal));
+
+                        let mut new_set = Set::new();
+                        new_set.insert(SyntacticObject::LexicalItemToken(new_goal.clone()));
+                        new_set.extend(set.iter()
+                            .filter_map(|child2| {
+                                if child2 != child {    
+                                    if let SyntacticObject::LexicalItemToken(lit2) = child2 {
+                                        if *lit2 == probe {
+                                            return Some(SyntacticObject::LexicalItemToken(new_probe.clone()));
+                                        }
+                                    }
+                                    Some(child2.clone())
+                                }
+                                else {
+                                    None
+                                }
+                            })
+                        );
+
+                        results.push((new_probe, new_goal, lit.clone(), SyntacticObject::Set(new_set)));
                     }
                 }
 
                 if !curr_child_is_goal {
-                    unwind_children.push(child);
+                    non_goal_children.push(child);
                 }
             }
 
-            //  If the probe is no longer active after Agreeing with the
-            //  goals, don't bother checking the non-goal children.
-            if !probe_is_still_active {
-                new_set.extend(unwind_children);
-                if put_probe_back_in {
-                    new_set.insert(SyntacticObject::LexicalItemToken(probe.clone()));
-                }
-                vec![ (probe, SyntacticObject::Set(new_set), past_goals, epp_target) ]
-            }
-            else {
-                //  At this point, `new_set` contains post-Agree goals.  To recover
-                //  the post-Agree SO, we need to add back in a post-Agree probe
-                //  if it is a child of the pre-Agree SO, and any non-goal children.
-
-                let mut results = vec![];
-
-                for child in unwind_children.iter() {
-                    let child_results = unwind_and_agree(probe.clone(), child.clone(), past_goals.clone(), epp_target.clone());
+            //  If Agree happened with some goal, don't bother checking the
+            //  non-goal children bc they cannot Agree (MLC violation).
+            if results.len() == 0 {
+                for child in non_goal_children.into_iter() {
+                    let child_results = unwind_and_agree(probe.clone(), child.clone(), under);
     
-                    results.extend(child_results.into_iter()
-                        .map(|(new_probe, new_child, new_past_goals, new_epp_target)| {
-                            let mut new_set = new_set.clone();
-                            assert!(new_set.insert(new_child));
-
-                            let mut found_old_child = 0;
-                            for child2 in unwind_children.iter() {
-                                if child2 == child {
-                                    found_old_child += 1;
+                    for (new_probe, new_goal, old_goal, new_child) in child_results.into_iter() {
+                        let mut new_set = Set::new();
+                        new_set.insert(new_child);
+                        new_set.extend(set.iter()
+                            .filter_map(|child2| {
+                                if child2 != child {
+                                    if let SyntacticObject::LexicalItemToken(lit2) = child2 {
+                                        if *lit2 == probe {
+                                            return Some(SyntacticObject::LexicalItemToken(new_probe.clone()));
+                                        }
+                                    }
+                                    Some(child2.clone())
                                 }
                                 else {
-                                    new_set.insert(child2.clone());
+                                    None
                                 }
-                            }
-                            assert!(found_old_child == 1);
-    
-                            if put_probe_back_in {
-                                new_set.insert(SyntacticObject::LexicalItemToken(new_probe.clone()));
-                            }
+                            })
+                        );
 
-                            let new_so = SyntacticObject::Set(new_set);
-                            (new_probe, new_so, new_past_goals, new_epp_target)
-                        })
-                    );
+                        results.push((new_probe, new_goal, old_goal, SyntacticObject::Set(new_set)));
+                    }
                 }
-    
-                results
             }
+
+            results
         },
 
-        _ => vec![ (probe, so, past_goals, epp_target) ],
+        _ => vec![],
     }
 }
 
@@ -751,47 +732,62 @@ fn unwind_and_agree(
 #[logwrap::logwrap]
 fn next_agree(
     past_probes: &Set<LexicalItemToken>,
-    so: &SyntacticObject
-) -> Option<Vec<(LexicalItemToken, SyntacticObject, Option<SyntacticObject>)>> {
+    so: &SyntacticObject,
+    root: &SyntacticObject,
+) -> Option<Vec<(LexicalItemToken, SyntacticObject, SyntacticObject)>>
+/* [ (old probe, new SO, new goal) ] */
+{
     match so {
         SyntacticObject::Set(set) => {
             for child in set {
                 if let SyntacticObject::LexicalItemToken(lit) = child {
                     if is_active(lit) && (!past_probes.contains(lit)) {
-                        let results = unwind_and_agree(lit.clone(), so.clone(), vec![], None);
+                        my_debug!("Looking for a possible application of Agree with probe: {}", lit);
+                        let results = unwind_and_agree(lit.clone(), so.clone(), root);
 
                         let res: Vec<_> = results.into_iter()
-                            //  Filter out the results that didn't find any goals.
-                            .filter(|(_, _, past_goals, _)| !past_goals.is_empty())
-                            .map(|(new_probe, new_set, past_goals, epp_target)| {
+                            .map(|(new_probe, new_goal, old_goal, new_so)| {
                                 my_debug!("Agree can apply with:");
                                 my_debug!(" -  Probe (before Agree): {}", lit);
                                 my_debug!(" -  Probe is defective? {:?}", is_defective(lit));
                                 my_debug!(" -  Probe (after Agree): {}", new_probe);
-                                my_debug!(" -  Goals (pre-Agree): {}", past_goals.iter().map(|g| format!("{}", g)).reduce(|a, b| format!("{}, {}", a, b)).unwrap_or_else(|| format!("(none)")));
-                                match epp_target.as_ref() {
-                                    Some(epp_target) => {
-                                        my_debug!(" -  Potential EPP target: {}", SOPrefixFormatter::new(epp_target, 26));
-                                    },
-                                    None => {
-                                        my_debug!(" -  (No potential EPP target)");
-                                    },
-                                }
+                                my_debug!(" -  Goal (before Agree): {}", old_goal);
+                                my_debug!(" -  Goal (after Agree): {}", new_goal);
 
-                                (lit.clone(), new_set, epp_target)
+                                (lit.clone(), new_so, SyntacticObject::LexicalItemToken(new_goal))
                             })
                             .collect();
 
-                        return match res.is_empty() {
-                            true => None,
-                            false => Some(res),
-                        };
+                        if !res.is_empty() {
+                            return Some(res);
+                        }
                     }
                 }
             }
 
-            set.iter()
-                .find_map(|child| next_agree(past_probes, child))
+            for child in set {
+                if let Some(results) = next_agree(past_probes, child, root) {
+                    return Some(results.into_iter()
+                        .map(|(old_probe, new_child, new_goal)| {
+                            let mut new_set = Set::new();
+                            new_set.insert(new_child);
+                            new_set.extend(set.iter()
+                                .filter_map(|child2| {
+                                    match child2 != child {
+                                        true => Some(child2.clone()),
+                                        false => None,
+                                    }
+                                })
+                            );
+
+                            (old_probe, SyntacticObject::Set(new_set), new_goal)
+                        })
+                        .collect()
+                    );
+                }
+            }
+
+            None
         },
 
         _ => None,
@@ -819,42 +815,31 @@ fn derive_by_agree<T: Triggers>(stage1: &Stage, stage2: &Stage) -> bool {
     for root in w1.0.iter() {
         let mut past_probes = Set::new();
 
-        while let Some(res) = next_agree(&past_probes, root) {
-            for (probe, new_root, epp_target) in res {
+        while let Some(res) = next_agree(&past_probes, root, root) {
+            for (probe, new_root, new_goal) in res {
                 my_debug!("Trying to match W2 with derive-by-Agree(W1)...");
                 my_debug!(" -  Root (before Agree): {}", SOPrefixFormatter::new(root, 25));
                 my_debug!(" -  Root (after Agree): {}", SOPrefixFormatter::new(&new_root, 24));
-                match epp_target.as_ref() {
-                    Some(epp_target) => {
-                        my_debug!(" -  Potential EPP target: {}", SOPrefixFormatter::new(epp_target, 26));
-                    },
-                    None => {
-                        my_debug!(" -  (No potential EPP target)");
-                    },
-                }
+                my_debug!(" -  Potential EPP target: {}", SOPrefixFormatter::new(&new_goal, 26));
     
                 let mut agreed_w1 = w1.clone();
                 assert!(agreed_w1.0.remove(root));
                 assert!(agreed_w1.0.insert(new_root.clone()));
     
                 //  If EPP, also merge.
-                if let Some(epp_target) = epp_target {
-                    my_debug!("There is a potential EPP target.  Does probe have EPP?");
-    
-                    if probe.li.syn.iter().any(|f| *f == epp_feature!()) {
-                        my_debug!("Probe has EPP.  Does the root immediately contain the probe?");
-    
-                        //  The probe must be immediately contained within the root.
-                        if root.immediately_contains(&SyntacticObject::LexicalItemToken(probe.clone())) {
-                            my_debug!("Yes.  Checking for triggered Merge(root, target)...");
-    
-                            if let Ok(merged) = triggered_merge::<T>(new_root.clone(), epp_target.clone(), &agreed_w1) {
-                                my_debug!("Merge (root, target) = {}", SOPrefixFormatter::new(&merged, 23));
-    
-                                assert!(agreed_w1.0.remove(&new_root));
-                                agreed_w1.0.remove(&epp_target);
-                                agreed_w1.0.insert(merged);
-                            }
+                if probe.li.syn.iter().any(|f| *f == epp_feature!()) {
+                    my_debug!("Probe has EPP.  Does the root immediately contain the probe?");
+
+                    //  The probe must be immediately contained within the root.
+                    if root.immediately_contains(&SyntacticObject::LexicalItemToken(probe.clone())) {
+                        my_debug!("Yes.  Checking for triggered Merge(root, target)...");
+
+                        if let Ok(merged) = triggered_merge::<T>(new_root.clone(), new_goal.clone(), &agreed_w1) {
+                            my_debug!("Merge (root, target) = {}", SOPrefixFormatter::new(&merged, 23));
+
+                            assert!(agreed_w1.0.remove(&new_root));
+                            agreed_w1.0.remove(&new_goal);
+                            agreed_w1.0.insert(merged);
                         }
                     }
                 }
