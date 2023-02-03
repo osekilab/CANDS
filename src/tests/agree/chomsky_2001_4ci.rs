@@ -34,7 +34,7 @@ fn test() {
                 synf!("N"),
                 synf!(true; "Person"; "3"),
                 synf!(true; "Number"; "pl"),
-                synf!(false; "Case"; "nom")
+                synf!(false; "Case"; "acc")
             ),
             fvec!("prizes")
         )
@@ -124,14 +124,14 @@ fn test() {
 
     let vstar_agreed1 = || {
         make_empty(
-            set!(synf!("v*"), synf!("=V"), synf!("=D"), synf!(false; "Person"; "3"), synf!(false; "Number"; _), synf!(false; "Case"; "nom")),
+            set!(synf!("v*"), synf!("=V"), synf!("=D"), synf!(false; "Person"; "3"), synf!(false; "Number"; _), synf!(false; "Case"; "acc")),
             fset!("v*")
         )
     };
 
     let vstar_agreed2 = || {
         make_empty(
-            set!(synf!("v*"), synf!("=V"), synf!("=D"), synf!(false; "Person"; "3"), synf!(false; "Number"; "pl"), synf!(false; "Case"; "nom")),
+            set!(synf!("v*"), synf!("=V"), synf!("=D"), synf!(false; "Person"; "3"), synf!(false; "Number"; "pl"), synf!(false; "Case"; "acc")),
             fset!("v*")
         )
     };
@@ -153,7 +153,7 @@ fn test() {
     let Pres = || {
         make_empty(
             set!(
-                synf!("T"), synf!("=Aux"), synf!(false; "Person"; _),
+                synf!("T"), synf!("=v*"), synf!(false; "Person"; _),
                 synf!(false; "Number"; _), synf!(false; "Case"; "nom"),
                 synf!("EPP")
             ),
@@ -164,7 +164,7 @@ fn test() {
     let Pres_agreed = || {
         make_empty(
             set!(
-                synf!("T"), synf!("=Aux"), synf!(false; "Person"; "1"),
+                synf!("T"), synf!("=v*"), synf!(false; "Person"; "1"),
                 synf!(false; "Number"; "pl"), synf!(false; "Case"; "nom"),
                 synf!("EPP")
             ),
@@ -183,25 +183,26 @@ fn test() {
 
     let lex = set!(
         prizes(),   several(),  D(),        awarded(),  vpass(),    there(),
-        be(),       def_to(),   likely(),   are(),      Pres(),     C()
+        be(),       def_to(),   expect(),   vstar(),    we(),       Pres(),
+        C()
     );
 
     let ug = UniversalGrammar::<BasicTriggers>::new(
         fset!(
-            "prizes", "several", "awarded", "there", "be", "to", "likely",
-            "are"
+            "prizes", "several", "awarded", "there", "be", "to", "expect",
+            "we"
         ),
         set!(
             synf!("N"), synf!("Q"), synf!("D"), synf!("V"), synf!("v"),
-            synf!("Aux"), synf!("T"), synf!("A"), synf!("C"),
+            synf!("Aux"), synf!("T"), synf!("v*"), synf!("C"),
             synf!("=N"), synf!("=Q"), synf!("=D"), synf!("=V"), synf!("=v"),
-            synf!("=Aux"), synf!("=T"), synf!("=A"),
+            synf!("=Aux"), synf!("=T"), synf!("=v*"),
             synf!("EPP"),
             synf!("Person"), synf!("Number"), synf!("Case") // lil' sloppy
         ),
         fset!(
             "prizes", "several", "D", "awarded", "v", "there", "be", "to",
-            "likely", "are", "Pres", "C"
+            "v*", "expect", "we", "Pres", "C"
         )
     );
 
@@ -222,8 +223,9 @@ fn test() {
                 lit!(there()),
                 lit!(be()),
                 lit!(def_to()),
-                lit!(likely()),
-                lit!(are()),
+                lit!(expect()),
+                lit!(vstar()),
+                lit!(we()),
                 lit!(Pres()),
                 lit!(C())
             )),
@@ -240,8 +242,9 @@ fn test() {
                 lit!(there()),
                 lit!(be()),
                 lit!(def_to()),
-                lit!(likely()),
-                lit!(are()),
+                lit!(expect()),
+                lit!(vstar()),
+                lit!(we()),
                 lit!(Pres()),
                 lit!(C())
             )),
@@ -259,8 +262,9 @@ fn test() {
                 lit!(there()),
                 lit!(be()),
                 lit!(def_to()),
-                lit!(likely()),
-                lit!(are()),
+                lit!(expect()),
+                lit!(vstar()),
+                lit!(we()),
                 lit!(Pres()),
                 lit!(C())
             )),
@@ -279,8 +283,9 @@ fn test() {
                 lit!(there()),
                 lit!(be()),
                 lit!(def_to()),
-                lit!(likely()),
-                lit!(are()),
+                lit!(expect()),
+                lit!(vstar()),
+                lit!(we()),
                 lit!(Pres()),
                 lit!(C())
             )),
@@ -300,8 +305,9 @@ fn test() {
                 lit!(there()),
                 lit!(be()),
                 lit!(def_to()),
-                lit!(likely()),
-                lit!(are()),
+                lit!(expect()),
+                lit!(vstar()),
+                lit!(we()),
                 lit!(Pres()),
                 lit!(C())
             )),
@@ -322,8 +328,9 @@ fn test() {
                 lit!(there()),
                 lit!(be()),
                 lit!(def_to()),
-                lit!(likely()),
-                lit!(are()),
+                lit!(expect()),
+                lit!(vstar()),
+                lit!(we()),
                 lit!(Pres()),
                 lit!(C())
             )),
@@ -345,8 +352,9 @@ fn test() {
                 lit!(there()),
                 lit!(be()),
                 lit!(def_to()),
-                lit!(likely()),
-                lit!(are()),
+                lit!(expect()),
+                lit!(vstar()),
+                lit!(we()),
                 lit!(Pres()),
                 lit!(C())
             )),
@@ -369,8 +377,9 @@ fn test() {
                 lit!(there()),
                 lit!(be()),
                 lit!(def_to()),
-                lit!(likely()),
-                lit!(are()),
+                lit!(expect()),
+                lit!(vstar()),
+                lit!(we()),
                 lit!(Pres()),
                 lit!(C())
             )),
@@ -394,8 +403,9 @@ fn test() {
                 lit!(there()),
                 lit!(be()),
                 lit!(def_to()),
-                lit!(likely()),
-                lit!(are()),
+                lit!(expect()),
+                lit!(vstar()),
+                lit!(we()),
                 lit!(Pres()),
                 lit!(C())
             )),
@@ -420,8 +430,9 @@ fn test() {
                 lit!(there()),
                 lit!(be()),
                 lit!(def_to()),
-                lit!(likely()),
-                lit!(are()),
+                lit!(expect()),
+                lit!(vstar()),
+                lit!(we()),
                 lit!(Pres()),
                 lit!(C())
             )),
@@ -447,8 +458,9 @@ fn test() {
             la: LexicalArray::new(set!(
                 lit!(be()),
                 lit!(def_to()),
-                lit!(likely()),
-                lit!(are()),
+                lit!(expect()),
+                lit!(vstar()),
+                lit!(we()),
                 lit!(Pres()),
                 lit!(C())
             )),
@@ -475,8 +487,9 @@ fn test() {
             la: LexicalArray::new(set!(
                 lit!(be()),
                 lit!(def_to()),
-                lit!(likely()),
-                lit!(are()),
+                lit!(expect()),
+                lit!(vstar()),
+                lit!(we()),
                 lit!(Pres()),
                 lit!(C())
             )),
@@ -504,8 +517,9 @@ fn test() {
         Stage {
             la: LexicalArray::new(set!(
                 lit!(def_to()),
-                lit!(likely()),
-                lit!(are()),
+                lit!(expect()),
+                lit!(vstar()),
+                lit!(we()),
                 lit!(Pres()),
                 lit!(C())
             )),
@@ -534,8 +548,9 @@ fn test() {
         Stage {
             la: LexicalArray::new(set!(
                 lit!(def_to()),
-                lit!(likely()),
-                lit!(are()),
+                lit!(expect()),
+                lit!(vstar()),
+                lit!(we()),
                 lit!(Pres()),
                 lit!(C())
             )),
@@ -565,8 +580,9 @@ fn test() {
         //  Select T_def
         Stage {
             la: LexicalArray::new(set!(
-                lit!(likely()),
-                lit!(are()),
+                lit!(expect()),
+                lit!(vstar()),
+                lit!(we()),
                 lit!(Pres()),
                 lit!(C())
             )),
@@ -597,8 +613,9 @@ fn test() {
         //  Merge (T_def, AuxP)
         Stage {
             la: LexicalArray::new(set!(
-                lit!(likely()),
-                lit!(are()),
+                lit!(expect()),
+                lit!(vstar()),
+                lit!(we()),
                 lit!(Pres()),
                 lit!(C())
             )),
@@ -632,8 +649,9 @@ fn test() {
         //  there moves to [Spec; T_def]
         Stage {
             la: LexicalArray::new(set!(
-                lit!(likely()),
-                lit!(are()),
+                lit!(expect()),
+                lit!(vstar()),
+                lit!(we()),
                 lit!(Pres()),
                 lit!(C())
             )),
@@ -666,15 +684,16 @@ fn test() {
             ))
         },
 
-        //  Select likely
+        //  Select expect
         Stage {
             la: LexicalArray::new(set!(
-                lit!(are()),
+                lit!(vstar()),
+                lit!(we()),
                 lit!(Pres()),
                 lit!(C())
             )),
             w: Workspace::new(set!(
-                so!(lit!(likely())),
+                so!(lit!(expect())),
                 so!(
                     so!(lit!(there())),
                     so!(
@@ -703,16 +722,17 @@ fn test() {
             ))
         },
 
-        //  Merge (likely, TP)
+        //  Merge (expect, TP)
         Stage {
             la: LexicalArray::new(set!(
-                lit!(are()),
+                lit!(vstar()),
+                lit!(we()),
                 lit!(Pres()),
                 lit!(C())
             )),
             w: Workspace::new(set!(
                 so!(
-                    so!(lit!(likely())),
+                    so!(lit!(expect())),
                     so!(
                         so!(lit!(there())),
                         so!(
@@ -742,16 +762,17 @@ fn test() {
             ))
         },
 
-        //  Select are
+        //  Select vstar
         Stage {
             la: LexicalArray::new(set!(
+                lit!(we()),
                 lit!(Pres()),
                 lit!(C())
             )),
             w: Workspace::new(set!(
-                so!(lit!(are())),
+                so!(lit!(vstar())),
                 so!(
-                    so!(lit!(likely())),
+                    so!(lit!(expect())),
                     so!(
                         so!(lit!(there())),
                         so!(
@@ -781,17 +802,18 @@ fn test() {
             ))
         },
 
-        //  Merge (are, AP)
+        //  Merge (vstar, VP)
         Stage {
             la: LexicalArray::new(set!(
+                lit!(we()),
                 lit!(Pres()),
                 lit!(C())
             )),
             w: Workspace::new(set!(
                 so!(
-                    so!(lit!(are())),
+                    so!(lit!(vstar())),
                     so!(
-                        so!(lit!(likely())),
+                        so!(lit!(expect())),
                         so!(
                             so!(lit!(there())),
                             so!(
@@ -809,6 +831,176 @@ fn test() {
                                                     so!(
                                                         so!(lit!(several())),
                                                         so!(lit!(prizes())),
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            ))
+        },
+
+        //  vstar agrees with there
+        Stage {
+            la: LexicalArray::new(set!(
+                lit!(we()),
+                lit!(Pres()),
+                lit!(C())
+            )),
+            w: Workspace::new(set!(
+                so!(
+                    so!(lit!(vstar_agreed1())),
+                    so!(
+                        so!(lit!(expect())),
+                        so!(
+                            so!(lit!(there())),
+                            so!(
+                                so!(lit!(def_to_agreed())),
+                                so!(
+                                    so!(lit!(be())),
+                                    so!(
+                                        so!(lit!(there())),
+                                        so!(
+                                            so!(lit!(vpass())),
+                                            so!(
+                                                so!(lit!(awarded())),
+                                                so!(
+                                                    so!(lit!(D())),
+                                                    so!(
+                                                        so!(lit!(several())),
+                                                        so!(lit!(prizes())),
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            ))
+        },
+
+        //  vstar agrees with prizes
+        Stage {
+            la: LexicalArray::new(set!(
+                lit!(we()),
+                lit!(Pres()),
+                lit!(C())
+            )),
+            w: Workspace::new(set!(
+                so!(
+                    so!(lit!(vstar_agreed2())),
+                    so!(
+                        so!(lit!(expect())),
+                        so!(
+                            so!(lit!(there())),
+                            so!(
+                                so!(lit!(def_to_agreed())),
+                                so!(
+                                    so!(lit!(be())),
+                                    so!(
+                                        so!(lit!(there())),
+                                        so!(
+                                            so!(lit!(vpass())),
+                                            so!(
+                                                so!(lit!(awarded())),
+                                                so!(
+                                                    so!(lit!(D())),
+                                                    so!(
+                                                        so!(lit!(several())),
+                                                        so!(lit!(prizes_agreed())),
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            ))
+        },
+
+        //  Select we
+        Stage {
+            la: LexicalArray::new(set!(
+                lit!(Pres()),
+                lit!(C())
+            )),
+            w: Workspace::new(set!(
+                so!(lit!(we())),
+                so!(
+                    so!(lit!(vstar_agreed2())),
+                    so!(
+                        so!(lit!(expect())),
+                        so!(
+                            so!(lit!(there())),
+                            so!(
+                                so!(lit!(def_to_agreed())),
+                                so!(
+                                    so!(lit!(be())),
+                                    so!(
+                                        so!(lit!(there())),
+                                        so!(
+                                            so!(lit!(vpass())),
+                                            so!(
+                                                so!(lit!(awarded())),
+                                                so!(
+                                                    so!(lit!(D())),
+                                                    so!(
+                                                        so!(lit!(several())),
+                                                        so!(lit!(prizes_agreed())),
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            ))
+        },
+
+        //  Merge (we, v*P)
+        Stage {
+            la: LexicalArray::new(set!(
+                lit!(Pres()),
+                lit!(C())
+            )),
+            w: Workspace::new(set!(
+                so!(
+                    so!(lit!(we())),
+                    so!(
+                        so!(lit!(vstar_agreed2())),
+                        so!(
+                            so!(lit!(expect())),
+                            so!(
+                                so!(lit!(there())),
+                                so!(
+                                    so!(lit!(def_to_agreed())),
+                                    so!(
+                                        so!(lit!(be())),
+                                        so!(
+                                            so!(lit!(there())),
+                                            so!(
+                                                so!(lit!(vpass())),
+                                                so!(
+                                                    so!(lit!(awarded())),
+                                                    so!(
+                                                        so!(lit!(D())),
+                                                        so!(
+                                                            so!(lit!(several())),
+                                                            so!(lit!(prizes_agreed())),
+                                                        ),
                                                     ),
                                                 ),
                                             ),
@@ -830,51 +1022,11 @@ fn test() {
             w: Workspace::new(set!(
                 so!(lit!(Pres())),
                 so!(
-                    so!(lit!(are())),
+                    so!(lit!(we())),
                     so!(
-                        so!(lit!(likely())),
+                        so!(lit!(vstar_agreed2())),
                         so!(
-                            so!(lit!(there())),
-                            so!(
-                                so!(lit!(def_to_agreed())),
-                                so!(
-                                    so!(lit!(be())),
-                                    so!(
-                                        so!(lit!(there())),
-                                        so!(
-                                            so!(lit!(vpass())),
-                                            so!(
-                                                so!(lit!(awarded())),
-                                                so!(
-                                                    so!(lit!(D())),
-                                                    so!(
-                                                        so!(lit!(several())),
-                                                        so!(lit!(prizes())),
-                                                    ),
-                                                ),
-                                            ),
-                                        ),
-                                    ),
-                                ),
-                            ),
-                        ),
-                    ),
-                )
-            ))
-        },
-
-        //  Merge (Pres, AuxP)
-        Stage {
-            la: LexicalArray::new(set!(
-                lit!(C())
-            )),
-            w: Workspace::new(set!(
-                so!(
-                    so!(lit!(Pres())),
-                    so!(
-                        so!(lit!(are())),
-                        so!(
-                            so!(lit!(likely())),
+                            so!(lit!(expect())),
                             so!(
                                 so!(lit!(there())),
                                 so!(
@@ -891,7 +1043,7 @@ fn test() {
                                                         so!(lit!(D())),
                                                         so!(
                                                             so!(lit!(several())),
-                                                            so!(lit!(prizes())),
+                                                            so!(lit!(prizes_agreed())),
                                                         ),
                                                     ),
                                                 ),
@@ -906,66 +1058,20 @@ fn test() {
             ))
         },
 
-        //  Pres agrees with there.  There moves to [Spec; Pres]
+        //  Merge (Pres, v*P)
         Stage {
             la: LexicalArray::new(set!(
                 lit!(C())
             )),
             w: Workspace::new(set!(
                 so!(
-                    so!(lit!(there())),
+                    so!(lit!(Pres())),
                     so!(
-                        so!(lit!(Pres_agreed1())),
+                        so!(lit!(we())),
                         so!(
-                            so!(lit!(are())),
+                            so!(lit!(vstar_agreed2())),
                             so!(
-                                so!(lit!(likely())),
-                                so!(
-                                    so!(lit!(there())),
-                                    so!(
-                                        so!(lit!(def_to_agreed())),
-                                        so!(
-                                            so!(lit!(be())),
-                                            so!(
-                                                so!(lit!(there())),
-                                                so!(
-                                                    so!(lit!(vpass())),
-                                                    so!(
-                                                        so!(lit!(awarded())),
-                                                        so!(
-                                                            so!(lit!(D())),
-                                                            so!(
-                                                                so!(lit!(several())),
-                                                                so!(lit!(prizes())),
-                                                            ),
-                                                        ),
-                                                    ),
-                                                ),
-                                            ),
-                                        ),
-                                    ),
-                                ),
-                            ),
-                        ),
-                    ),
-                )
-            ))
-        },
-
-        //  Pres agrees with prizes
-        Stage {
-            la: LexicalArray::new(set!(
-                lit!(C())
-            )),
-            w: Workspace::new(set!(
-                so!(
-                    so!(lit!(there())),
-                    so!(
-                        so!(lit!(Pres_agreed2())),
-                        so!(
-                            so!(lit!(are())),
-                            so!(
-                                so!(lit!(likely())),
+                                so!(lit!(expect())),
                                 so!(
                                     so!(lit!(there())),
                                     so!(
@@ -998,65 +1104,22 @@ fn test() {
             ))
         },
 
-        //  Select C
+        //  Pres agrees with we
         Stage {
-            la: LexicalArray::new(set!()),
-            w: Workspace::new(set!(
-                so!(lit!(C())),
-                so!(
-                    so!(lit!(there())),
-                    so!(
-                        so!(lit!(Pres_agreed2())),
-                        so!(
-                            so!(lit!(are())),
-                            so!(
-                                so!(lit!(likely())),
-                                so!(
-                                    so!(lit!(there())),
-                                    so!(
-                                        so!(lit!(def_to_agreed())),
-                                        so!(
-                                            so!(lit!(be())),
-                                            so!(
-                                                so!(lit!(there())),
-                                                so!(
-                                                    so!(lit!(vpass())),
-                                                    so!(
-                                                        so!(lit!(awarded())),
-                                                        so!(
-                                                            so!(lit!(D())),
-                                                            so!(
-                                                                so!(lit!(several())),
-                                                                so!(lit!(prizes_agreed())),
-                                                            ),
-                                                        ),
-                                                    ),
-                                                ),
-                                            ),
-                                        ),
-                                    ),
-                                ),
-                            ),
-                        ),
-                    ),
-                )
-            ))
-        },
-
-        //  Merge (C, TP)
-        Stage {
-            la: LexicalArray::new(set!()),
+            la: LexicalArray::new(set!(
+                lit!(C())
+            )),
             w: Workspace::new(set!(
                 so!(
-                    so!(lit!(C())),
+                    so!(lit!(we_agreed())),
                     so!(
-                        so!(lit!(there())),
+                        so!(lit!(Pres_agreed())),
                         so!(
-                            so!(lit!(Pres_agreed2())),
+                            so!(lit!(we_agreed())),
                             so!(
-                                so!(lit!(are())),
+                                so!(lit!(vstar_agreed2())),
                                 so!(
-                                    so!(lit!(likely())),
+                                    so!(lit!(expect())),
                                     so!(
                                         so!(lit!(there())),
                                         so!(
@@ -1090,21 +1153,70 @@ fn test() {
             ))
         },
 
-        //  Transfer (CP, CP)
+        //  Select C
+        Stage {
+            la: LexicalArray::new(set!()),
+            w: Workspace::new(set!(
+                so!(lit!(C())),
+                so!(
+                    so!(lit!(we_agreed())),
+                    so!(
+                        so!(lit!(Pres_agreed())),
+                        so!(
+                            so!(lit!(we_agreed())),
+                            so!(
+                                so!(lit!(vstar_agreed2())),
+                                so!(
+                                    so!(lit!(expect())),
+                                    so!(
+                                        so!(lit!(there())),
+                                        so!(
+                                            so!(lit!(def_to_agreed())),
+                                            so!(
+                                                so!(lit!(be())),
+                                                so!(
+                                                    so!(lit!(there())),
+                                                    so!(
+                                                        so!(lit!(vpass())),
+                                                        so!(
+                                                            so!(lit!(awarded())),
+                                                            so!(
+                                                                so!(lit!(D())),
+                                                                so!(
+                                                                    so!(lit!(several())),
+                                                                    so!(lit!(prizes_agreed())),
+                                                                ),
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            ))
+        },
+
+        //  Merge (C, TP)
         Stage {
             la: LexicalArray::new(set!()),
             w: Workspace::new(set!(
                 so!(
+                    so!(lit!(C())),
                     so!(
-                        so!(lit!(C())),
+                        so!(lit!(we_agreed())),
                         so!(
-                            so!(lit!(there())),
+                            so!(lit!(Pres_agreed())),
                             so!(
-                                so!(lit!(Pres_agreed2())),
+                                so!(lit!(we_agreed())),
                                 so!(
-                                    so!(lit!(are())),
+                                    so!(lit!(vstar_agreed2())),
                                     so!(
-                                        so!(lit!(likely())),
+                                        so!(lit!(expect())),
                                         so!(
                                             so!(lit!(there())),
                                             so!(
@@ -1134,14 +1246,66 @@ fn test() {
                                 ),
                             ),
                         ),
+                    ),
+                )
+            ))
+        },
+
+        //  Transfer (CP, CP)
+        Stage {
+            la: LexicalArray::new(set!()),
+            w: Workspace::new(set!(
+                so!(
+                    so!(
+                        so!(lit!(C())),
+                        so!(
+                            so!(lit!(we_agreed())),
+                            so!(
+                                so!(lit!(Pres_agreed())),
+                                so!(
+                                    so!(lit!(we_agreed())),
+                                    so!(
+                                        so!(lit!(vstar_agreed2())),
+                                        so!(
+                                            so!(lit!(expect())),
+                                            so!(
+                                                so!(lit!(there())),
+                                                so!(
+                                                    so!(lit!(def_to_agreed())),
+                                                    so!(
+                                                        so!(lit!(be())),
+                                                        so!(
+                                                            so!(lit!(there())),
+                                                            so!(
+                                                                so!(lit!(vpass())),
+                                                                so!(
+                                                                    so!(lit!(awarded())),
+                                                                    so!(
+                                                                        so!(lit!(D())),
+                                                                        so!(
+                                                                            so!(lit!(several())),
+                                                                            so!(lit!(prizes_agreed())),
+                                                                        ),
+                                                                    ),
+                                                                ),
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
                     ) =>
                     fvec!(
-                        "there", "are", "likely", "to", "be", "awarded",
+                        "we", "expect", "there", "to", "be", "awarded",
                         "several", "prizes"
                     ) ;
                     fset!(
                         "prizes", "several", "D", "awarded", "v", "there",
-                        "be", "to", "likely", "are", "Pres", "C"
+                        "be", "to", "v*", "expect", "we", "Pres", "C"
                     )
                 )
             ))
