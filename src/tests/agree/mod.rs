@@ -4,6 +4,9 @@ mod chomsky_2001_4bi;
 #[cfg(test)]
 mod chomsky_2001_4bii;
 
+#[cfg(test)]
+mod chomsky_2001_4ci;
+
 
 
 use std::collections::HashMap;

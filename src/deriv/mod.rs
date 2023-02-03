@@ -474,16 +474,21 @@ fn derive_by_transfer<T: Triggers>(stage1: &Stage, stage2: &Stage) -> bool {
                 my_debug!("Try Transfer(SO1, SO1)...");
                 let mut w = w1.clone();
                 w.0.remove(so1);
-                w.0.insert(transfer::<T>(&so1, so1.clone(), w1));
-                my_debug!("The workspace should be: {}", w);
-                
-                let res = w == *w2;
+                match transfer::<T>(&so1, so1.clone(), w1) {
+                    Ok(so1) => {
+                        w.0.insert(so1);
+                        my_debug!("The workspace should be: {}", w);
 
-                if res {
-                    my_info!("This pair of stages is derived by Transfer(SO1, SO1).");
+                        let res = w == *w2;
+
+                        if res {
+                            my_info!("This pair of stages is derived by Transfer(SO1, SO1).");
+                        }
+
+                        res
+                    },
+                    Err(_) => false,
                 }
-
-                res
             } || {
                 // eprintln!("Derivation: Try Cyclic-Transfer :::::::::::::::::::::::::");
                 my_debug!("Try Cyclic-Transfer(SO1)...");

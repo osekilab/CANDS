@@ -225,13 +225,20 @@ fn transfer_lf(phase: &SyntacticObject, so: &SyntacticObject) -> Set<Feature> {
 
 
 
-pub fn transfer<T: Triggers>(phase: &SyntacticObject, so: SyntacticObject, w: &Workspace) -> SyntacticObject {
+pub fn transfer<T: Triggers>(phase: &SyntacticObject, so: SyntacticObject, w: &Workspace) -> Result<SyntacticObject, SyntacticObject> {
     // eprintln!("Transfer: We are trying to transfer SO =\n{}", so);
     // eprintln!("Transfer: In the phase\n{}", phase);
-    let pf = transfer_pf::<T>(&phase, &so, w);
-    let lf = transfer_lf(&phase, &so);
 
-    SyntacticObject::Transfer { so: Box::new(so), pf, lf }
+    if let Ok(tfs) = T::triggers(&so, w) {
+        if tfs.is_empty() {
+            let pf = transfer_pf::<T>(&phase, &so, w);
+            let lf = transfer_lf(&phase, &so);
+
+            return Ok(SyntacticObject::Transfer { so: Box::new(so), pf, lf });
+        }
+    }
+
+    Err(so)
 }
 
 
@@ -311,11 +318,21 @@ fn unwind_and_transfer<T: Triggers>(mut so: SyntacticObject, head: &SyntacticObj
                 let x1 = it.next().unwrap().clone();
                 let x2 = it.next().unwrap().clone();
     
-                Ok(SyntacticObject::Set(match action {
-                    Action::TransferFirst => set!( transfer::<T>(&so, x1, w), x2 ),
-                    Action::TransferSecond => set!( x1, transfer::<T>(&so, x2, w) ),
+                match action {
+                    Action::TransferFirst => {
+                        match transfer::<T>(&so, x1, w) {
+                            Ok(new_x1) => Ok(SyntacticObject::Set(set!( new_x1, x2 ))),
+                            Err(_) => Err(so),
+                        }
+                    },
+                    Action::TransferSecond => {
+                        match transfer::<T>(&so, x2, w) {
+                            Ok(new_x2) => Ok(SyntacticObject::Set(set!( x1, new_x2 ))),
+                            Err(_) => Err(so),
+                        }
+                    },
                     _ => panic!(),
-                }))
+                }
             }
             else {
                 panic!()
