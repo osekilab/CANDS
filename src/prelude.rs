@@ -17,7 +17,8 @@ pub(crate) use crate::utils::{
 };
 pub(crate) use crate::feature::{
     Feature, f, fset, fvec,
-    wh_feature,
+    uwh_feature,
+    iwh_feature,
     epp_feature,
     comp_feature,
     strong_light_verb_feature,

@@ -2,12 +2,13 @@ use std::fmt;
 
 
 
-macro_rules! wh_feature { () => { f!("wh") }; }
+macro_rules! uwh_feature { () => { f!("uwh") }; }
+macro_rules! iwh_feature { () => { f!("iwh") }; }
 macro_rules! epp_feature { () => { f!("EPP") }; }
 macro_rules! comp_feature { () => { f!("C") } }
 macro_rules! strong_light_verb_feature { () => { f!("v*") } }
 
-pub(crate) use { wh_feature, epp_feature, comp_feature, strong_light_verb_feature };
+pub(crate) use { uwh_feature, iwh_feature, epp_feature, comp_feature, strong_light_verb_feature };
 
 pub const CATSEL_FEATURE_PREFIX: &'static str = "=";
 

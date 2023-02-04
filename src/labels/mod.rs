@@ -92,8 +92,8 @@ impl BasicTriggers {
         // eprintln!("Check-TF: wrt_syn = {:?}", wrt_syn);
 
         //  Check wh
-        if from.contains(&wh_feature!()) && wrt_syn.contains(&wh_feature!()) {
-            assert!(from.remove(&wh_feature!()));
+        if from.contains(&uwh_feature!()) && wrt_syn.contains(&iwh_feature!()) {
+            assert!(from.remove(&uwh_feature!()));
             return Ok(from);
         }
 
@@ -132,7 +132,7 @@ impl Triggers for BasicTriggers {
                 Ok(
                     lit.li.syn.iter()
                         .filter(|&f| {
-                            f == &wh_feature!() ||
+                            f == &uwh_feature!() ||
                             f == &epp_feature!() ||
                             f.0.starts_with(CATSEL_FEATURE_PREFIX)
                         })
