@@ -38,14 +38,14 @@ fn test() {
 
     let X = || {
         make_empty(
-            fset!("X", "=v*", "=P"),
+            fset!("X", "=T", "=P"),
             fset!("X")
         )
     };
 
     let Y = || {
         make_empty(
-            fset!("v*", "=X", "=v*"),
+            fset!("T", "=X", "=T"),
             fset!("Y")
         )
     };
@@ -441,15 +441,15 @@ fn test() {
             )),
         },
 
-        //  Select X
+        //  Select Past
         Stage {
             la: LexicalArray::new(set!(
+                lit!(X()),
                 lit!(Y()),
-                lit!(Past()),
                 lit!(C())
             )),
             w: Workspace::new(set!(
-                so!(lit!(X())),
+                so!(lit!(Past())),
                 so!(
                     so!(
                         so!(lit!(a())),
@@ -472,16 +472,16 @@ fn test() {
             )),
         },
 
-        //  Merge (X, v*P)
+        //  Merge (Past, v*P)
         Stage {
             la: LexicalArray::new(set!(
+                lit!(X()),
                 lit!(Y()),
-                lit!(Past()),
                 lit!(C())
             )),
             w: Workspace::new(set!(
                 so!(
-                    so!(lit!(X())),
+                    so!(lit!(Past())),
                     so!(
                         so!(
                             so!(lit!(a())),
@@ -505,21 +505,72 @@ fn test() {
             )),
         },
 
-        //  Merge (XP, PP)
+        //  Merge (TP, DP)
+        Stage {
+            la: LexicalArray::new(set!(
+                lit!(X()),
+                lit!(Y()),
+                lit!(C())
+            )),
+            w: Workspace::new(set!(
+                so!(
+                    so!(
+                        so!(lit!(a())),
+                        so!(
+                            so!(lit!(story())),
+                            so!(
+                                so!(lit!(about())),
+                                so!(lit!(mary())),
+                            ),
+                        ),
+                    ),
+                    so!(
+                        so!(lit!(Past())),
+                        so!(
+                            so!(
+                                so!(lit!(a())),
+                                so!(
+                                    so!(lit!(story())),
+                                    so!(
+                                        so!(lit!(about())),
+                                        so!(lit!(mary())),
+                                    ),
+                                ),
+                            ),
+                            so!(
+                                so!(lit!(vstar())),
+                                so!(
+                                    so!(lit!(bothered())),
+                                    so!(lit!(me())),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            )),
+        },
+
+        //  Select X
         Stage {
             la: LexicalArray::new(set!(
                 lit!(Y()),
-                lit!(Past()),
                 lit!(C())
             )),
             w: Workspace::new(set!(
+                so!(lit!(X())),
                 so!(
                     so!(
-                        so!(lit!(about())),
-                        so!(lit!(mary())),
+                        so!(lit!(a())),
+                        so!(
+                            so!(lit!(story())),
+                            so!(
+                                so!(lit!(about())),
+                                so!(lit!(mary())),
+                            ),
+                        ),
                     ),
                     so!(
-                        so!(lit!(X())),
+                        so!(lit!(Past())),
                         so!(
                             so!(
                                 so!(lit!(a())),
@@ -544,61 +595,28 @@ fn test() {
             )),
         },
 
-        //  Select Y
+        //  Merge (X, TP)
         Stage {
             la: LexicalArray::new(set!(
-                lit!(Past()),
-                lit!(C())
-            )),
-            w: Workspace::new(set!(
-                so!(lit!(Y())),
-                so!(
-                    so!(
-                        so!(lit!(about())),
-                        so!(lit!(mary())),
-                    ),
-                    so!(
-                        so!(lit!(X())),
-                        so!(
-                            so!(
-                                so!(lit!(a())),
-                                so!(
-                                    so!(lit!(story())),
-                                    so!(
-                                        so!(lit!(about())),
-                                        so!(lit!(mary())),
-                                    ),
-                                ),
-                            ),
-                            so!(
-                                so!(lit!(vstar())),
-                                so!(
-                                    so!(lit!(bothered())),
-                                    so!(lit!(me())),
-                                ),
-                            ),
-                        ),
-                    ),
-                )
-            )),
-        },
-
-        //  Merge (Y, XP)
-        Stage {
-            la: LexicalArray::new(set!(
-                lit!(Past()),
+                lit!(Y()),
                 lit!(C())
             )),
             w: Workspace::new(set!(
                 so!(
-                    so!(lit!(Y())),
+                    so!(lit!(X())),
                     so!(
                         so!(
-                            so!(lit!(about())),
-                            so!(lit!(mary())),
+                            so!(lit!(a())),
+                            so!(
+                                so!(lit!(story())),
+                                so!(
+                                    so!(lit!(about())),
+                                    so!(lit!(mary())),
+                                ),
+                            ),
                         ),
                         so!(
-                            so!(lit!(X())),
+                            so!(lit!(Past())),
                             so!(
                                 so!(
                                     so!(lit!(a())),
@@ -624,139 +642,20 @@ fn test() {
             )),
         },
 
-        //  Merge (YP, v*P)
+        //  Merge (XP, PP)
         Stage {
             la: LexicalArray::new(set!(
-                lit!(Past()),
+                lit!(Y()),
                 lit!(C())
             )),
             w: Workspace::new(set!(
                 so!(
                     so!(
-                        so!(
-                            so!(lit!(a())),
-                            so!(
-                                so!(lit!(story())),
-                                so!(
-                                    so!(lit!(about())),
-                                    so!(lit!(mary())),
-                                ),
-                            ),
-                        ),
-                        so!(
-                            so!(lit!(vstar())),
-                            so!(
-                                so!(lit!(bothered())),
-                                so!(lit!(me())),
-                            ),
-                        ),
+                        so!(lit!(about())),
+                        so!(lit!(mary())),
                     ),
                     so!(
-                        so!(lit!(Y())),
-                        so!(
-                            so!(
-                                so!(lit!(about())),
-                                so!(lit!(mary())),
-                            ),
-                            so!(
-                                so!(lit!(X())),
-                                so!(
-                                    so!(
-                                        so!(lit!(a())),
-                                        so!(
-                                            so!(lit!(story())),
-                                            so!(
-                                                so!(lit!(about())),
-                                                so!(lit!(mary())),
-                                            ),
-                                        ),
-                                    ),
-                                    so!(
-                                        so!(lit!(vstar())),
-                                        so!(
-                                            so!(lit!(bothered())),
-                                            so!(lit!(me())),
-                                        ),
-                                    ),
-                                ),
-                            ),
-                        ),
-                    ),
-                )
-            )),
-        },
-
-        //  Select Past
-        Stage {
-            la: LexicalArray::new(set!(
-                lit!(C())
-            )),
-            w: Workspace::new(set!(
-                so!(lit!(Past())),
-                so!(
-                    so!(
-                        so!(
-                            so!(lit!(a())),
-                            so!(
-                                so!(lit!(story())),
-                                so!(
-                                    so!(lit!(about())),
-                                    so!(lit!(mary())),
-                                ),
-                            ),
-                        ),
-                        so!(
-                            so!(lit!(vstar())),
-                            so!(
-                                so!(lit!(bothered())),
-                                so!(lit!(me())),
-                            ),
-                        ),
-                    ),
-                    so!(
-                        so!(lit!(Y())),
-                        so!(
-                            so!(
-                                so!(lit!(about())),
-                                so!(lit!(mary())),
-                            ),
-                            so!(
-                                so!(lit!(X())),
-                                so!(
-                                    so!(
-                                        so!(lit!(a())),
-                                        so!(
-                                            so!(lit!(story())),
-                                            so!(
-                                                so!(lit!(about())),
-                                                so!(lit!(mary())),
-                                            ),
-                                        ),
-                                    ),
-                                    so!(
-                                        so!(lit!(vstar())),
-                                        so!(
-                                            so!(lit!(bothered())),
-                                            so!(lit!(me())),
-                                        ),
-                                    ),
-                                ),
-                            ),
-                        ),
-                    ),
-                )
-            )),
-        },
-
-        //  Merge (Past, YP)
-        Stage {
-            la: LexicalArray::new(set!(
-                lit!(C())
-            )),
-            w: Workspace::new(set!(
-                so!(
-                    so!(lit!(Past())),
-                    so!(
+                        so!(lit!(X())),
                         so!(
                             so!(
                                 so!(lit!(a())),
@@ -769,22 +668,114 @@ fn test() {
                                 ),
                             ),
                             so!(
-                                so!(lit!(vstar())),
+                                so!(lit!(Past())),
                                 so!(
-                                    so!(lit!(bothered())),
-                                    so!(lit!(me())),
+                                    so!(
+                                        so!(lit!(a())),
+                                        so!(
+                                            so!(lit!(story())),
+                                            so!(
+                                                so!(lit!(about())),
+                                                so!(lit!(mary())),
+                                            ),
+                                        ),
+                                    ),
+                                    so!(
+                                        so!(lit!(vstar())),
+                                        so!(
+                                            so!(lit!(bothered())),
+                                            so!(lit!(me())),
+                                        ),
+                                    ),
                                 ),
                             ),
                         ),
+                    ),
+                )
+            )),
+        },
+
+        //  Select Y
+        Stage {
+            la: LexicalArray::new(set!(
+                lit!(C())
+            )),
+            w: Workspace::new(set!(
+                so!(lit!(Y())),
+                so!(
+                    so!(
+                        so!(lit!(about())),
+                        so!(lit!(mary())),
+                    ),
+                    so!(
+                        so!(lit!(X())),
                         so!(
-                            so!(lit!(Y())),
+                            so!(
+                                so!(lit!(a())),
+                                so!(
+                                    so!(lit!(story())),
+                                    so!(
+                                        so!(lit!(about())),
+                                        so!(lit!(mary())),
+                                    ),
+                                ),
+                            ),
+                            so!(
+                                so!(lit!(Past())),
+                                so!(
+                                    so!(
+                                        so!(lit!(a())),
+                                        so!(
+                                            so!(lit!(story())),
+                                            so!(
+                                                so!(lit!(about())),
+                                                so!(lit!(mary())),
+                                            ),
+                                        ),
+                                    ),
+                                    so!(
+                                        so!(lit!(vstar())),
+                                        so!(
+                                            so!(lit!(bothered())),
+                                            so!(lit!(me())),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            )),
+        },
+
+        //  Merge (Y, XP)
+        Stage {
+            la: LexicalArray::new(set!(
+                lit!(C())
+            )),
+            w: Workspace::new(set!(
+                so!(
+                    so!(lit!(Y())),
+                    so!(
+                        so!(
+                            so!(lit!(about())),
+                            so!(lit!(mary())),
+                        ),
+                        so!(
+                            so!(lit!(X())),
                             so!(
                                 so!(
-                                    so!(lit!(about())),
-                                    so!(lit!(mary())),
+                                    so!(lit!(a())),
+                                    so!(
+                                        so!(lit!(story())),
+                                        so!(
+                                            so!(lit!(about())),
+                                            so!(lit!(mary())),
+                                        ),
+                                    ),
                                 ),
                                 so!(
-                                    so!(lit!(X())),
+                                    so!(lit!(Past())),
                                     so!(
                                         so!(
                                             so!(lit!(a())),
@@ -812,7 +803,7 @@ fn test() {
             )),
         },
 
-        //  Merge (TP, DP)
+        //  Merge (YP, TP)
         Stage {
             la: LexicalArray::new(set!(
                 lit!(C())
@@ -820,18 +811,18 @@ fn test() {
             w: Workspace::new(set!(
                 so!(
                     so!(
-                        so!(lit!(a())),
                         so!(
-                            so!(lit!(story())),
+                            so!(lit!(a())),
                             so!(
-                                so!(lit!(about())),
-                                so!(lit!(mary())),
+                                so!(lit!(story())),
+                                so!(
+                                    so!(lit!(about())),
+                                    so!(lit!(mary())),
+                                ),
                             ),
                         ),
-                    ),
-                    so!(
-                        so!(lit!(Past())),
                         so!(
+                            so!(lit!(Past())),
                             so!(
                                 so!(
                                     so!(lit!(a())),
@@ -851,15 +842,30 @@ fn test() {
                                     ),
                                 ),
                             ),
+                        ),
+                    ),
+                    so!(
+                        so!(lit!(Y())),
+                        so!(
                             so!(
-                                so!(lit!(Y())),
+                                so!(lit!(about())),
+                                so!(lit!(mary())),
+                            ),
+                            so!(
+                                so!(lit!(X())),
                                 so!(
                                     so!(
-                                        so!(lit!(about())),
-                                        so!(lit!(mary())),
+                                        so!(lit!(a())),
+                                        so!(
+                                            so!(lit!(story())),
+                                            so!(
+                                                so!(lit!(about())),
+                                                so!(lit!(mary())),
+                                            ),
+                                        ),
                                     ),
                                     so!(
-                                        so!(lit!(X())),
+                                        so!(lit!(Past())),
                                         so!(
                                             so!(
                                                 so!(lit!(a())),
@@ -895,18 +901,18 @@ fn test() {
                 so!(lit!(C())),
                 so!(
                     so!(
-                        so!(lit!(a())),
                         so!(
-                            so!(lit!(story())),
+                            so!(lit!(a())),
                             so!(
-                                so!(lit!(about())),
-                                so!(lit!(mary())),
+                                so!(lit!(story())),
+                                so!(
+                                    so!(lit!(about())),
+                                    so!(lit!(mary())),
+                                ),
                             ),
                         ),
-                    ),
-                    so!(
-                        so!(lit!(Past())),
                         so!(
+                            so!(lit!(Past())),
                             so!(
                                 so!(
                                     so!(lit!(a())),
@@ -926,15 +932,30 @@ fn test() {
                                     ),
                                 ),
                             ),
+                        ),
+                    ),
+                    so!(
+                        so!(lit!(Y())),
+                        so!(
                             so!(
-                                so!(lit!(Y())),
+                                so!(lit!(about())),
+                                so!(lit!(mary())),
+                            ),
+                            so!(
+                                so!(lit!(X())),
                                 so!(
                                     so!(
-                                        so!(lit!(about())),
-                                        so!(lit!(mary())),
+                                        so!(lit!(a())),
+                                        so!(
+                                            so!(lit!(story())),
+                                            so!(
+                                                so!(lit!(about())),
+                                                so!(lit!(mary())),
+                                            ),
+                                        ),
                                     ),
                                     so!(
-                                        so!(lit!(X())),
+                                        so!(lit!(Past())),
                                         so!(
                                             so!(
                                                 so!(lit!(a())),
@@ -971,18 +992,18 @@ fn test() {
                     so!(lit!(C())),
                     so!(
                         so!(
-                            so!(lit!(a())),
                             so!(
-                                so!(lit!(story())),
+                                so!(lit!(a())),
                                 so!(
-                                    so!(lit!(about())),
-                                    so!(lit!(mary())),
+                                    so!(lit!(story())),
+                                    so!(
+                                        so!(lit!(about())),
+                                        so!(lit!(mary())),
+                                    ),
                                 ),
                             ),
-                        ),
-                        so!(
-                            so!(lit!(Past())),
                             so!(
+                                so!(lit!(Past())),
                                 so!(
                                     so!(
                                         so!(lit!(a())),
@@ -1002,15 +1023,30 @@ fn test() {
                                         ),
                                     ),
                                 ),
+                            ),
+                        ),
+                        so!(
+                            so!(lit!(Y())),
+                            so!(
                                 so!(
-                                    so!(lit!(Y())),
+                                    so!(lit!(about())),
+                                    so!(lit!(mary())),
+                                ),
+                                so!(
+                                    so!(lit!(X())),
                                     so!(
                                         so!(
-                                            so!(lit!(about())),
-                                            so!(lit!(mary())),
+                                            so!(lit!(a())),
+                                            so!(
+                                                so!(lit!(story())),
+                                                so!(
+                                                    so!(lit!(about())),
+                                                    so!(lit!(mary())),
+                                                ),
+                                            ),
                                         ),
                                         so!(
-                                            so!(lit!(X())),
+                                            so!(lit!(Past())),
                                             so!(
                                                 so!(
                                                     so!(lit!(a())),
@@ -1049,18 +1085,18 @@ fn test() {
                         so!(lit!(C())),
                         so!(
                             so!(
-                                so!(lit!(a())),
                                 so!(
-                                    so!(lit!(story())),
+                                    so!(lit!(a())),
                                     so!(
-                                        so!(lit!(about())),
-                                        so!(lit!(mary())),
+                                        so!(lit!(story())),
+                                        so!(
+                                            so!(lit!(about())),
+                                            so!(lit!(mary())),
+                                        ),
                                     ),
                                 ),
-                            ),
-                            so!(
-                                so!(lit!(Past())),
                                 so!(
+                                    so!(lit!(Past())),
                                     so!(
                                         so!(
                                             so!(lit!(a())),
@@ -1080,15 +1116,30 @@ fn test() {
                                             ),
                                         ),
                                     ),
+                                ),
+                            ),
+                            so!(
+                                so!(lit!(Y())),
+                                so!(
                                     so!(
-                                        so!(lit!(Y())),
+                                        so!(lit!(about())),
+                                        so!(lit!(mary())),
+                                    ),
+                                    so!(
+                                        so!(lit!(X())),
                                         so!(
                                             so!(
-                                                so!(lit!(about())),
-                                                so!(lit!(mary())),
+                                                so!(lit!(a())),
+                                                so!(
+                                                    so!(lit!(story())),
+                                                    so!(
+                                                        so!(lit!(about())),
+                                                        so!(lit!(mary())),
+                                                    ),
+                                                ),
                                             ),
                                             so!(
-                                                so!(lit!(X())),
+                                                so!(lit!(Past())),
                                                 so!(
                                                     so!(
                                                         so!(lit!(a())),
@@ -1115,12 +1166,9 @@ fn test() {
                             ),
                         ),
                     ) =>
-                    fvec!(
-                        "a", "story", "bothered", "me", "about", "Mary"
-                    ) ;
+                    fvec!("a", "story", "bothered", "me", "about", "Mary") ;
                     fset!(
-                        "Mary", "about", "story", "a", "X", "Y", "me", "bothered", "v*",
-                        "Past", "C"
+                        "Mary", "about", "story", "a", "X", "Y", "me", "bothered", "v*", "Past", "C"
                     )
                 )
             )),
