@@ -510,8 +510,7 @@ fn derive_by_transfer<T: Triggers>(stage1: &Stage, stage2: &Stage) -> bool {
     occurrences of each SO.
  */
 fn contains_bad_chain<'a, T: Triggers>(so: &'a SyntacticObject, w: &Workspace) -> Result<(), HashMap<&'a SyntacticObject, usize>> {
-    //  Set of all SOs reflexively contained in some [Spec; TP] contained in `so`.
-    let sos_in_spec_tp: Set<_> = so.contained_sos(true, true)
+    let spec_tps: Set<_> = so.contained_sos(true, true)
         //  Transform into all [Spec; TP]s.
         .filter_map(|so| {
             match so {
@@ -551,13 +550,18 @@ fn contains_bad_chain<'a, T: Triggers>(so: &'a SyntacticObject, w: &Workspace) -
             }
         })
         //  Get all SOs contained in some [Spec; TP]s.
-        .flat_map(|so| so.contained_sos(true, true))
         .collect();
 
-    //  Occurrences of all SOs contained in `so`.
+    //  Occurrences of all SOs contained in some [Spec; TP] (not necessarily
+    //  the same!) in `so`.
     let cnts: HashMap<&'a SyntacticObject, usize> =
         so.contained_sos(true, true)
-            .filter(|so| sos_in_spec_tp.contains(so))
+            //  We can take out this filter and it will still work, but it will
+            //  reduce the search space later.
+            .filter(|so| {
+                spec_tps.iter()
+                    .any(|&spec_tp| spec_tp.contains(so))
+            })
             .fold(HashMap::new(), |mut map, so| {
                 match map.get_mut(&so) {
                     Some(cnt) => { *cnt += 1; },
@@ -565,18 +569,22 @@ fn contains_bad_chain<'a, T: Triggers>(so: &'a SyntacticObject, w: &Workspace) -
                 }
                 map
             });
-        
-    let mut same_cnt = None;
-    for (_, cnt) in cnts.iter() {
-        match same_cnt {
-            Some(same_cnt) => {
-                if same_cnt != *cnt {
-                    return Err(cnts);
+
+    for spec_tp in spec_tps {
+        let mut same_cnt = None;
+        for (&so, cnt) in cnts.iter() {
+            if spec_tp.contains(so) {
+                match same_cnt {
+                    Some(same_cnt) => {
+                        if same_cnt != *cnt {
+                            return Err(cnts);
+                        }
+                    },
+                    None => {
+                        same_cnt = Some(*cnt);
+                    },
                 }
-            },
-            None => {
-                same_cnt = Some(*cnt);
-            },
+            }
         }
     }
     
