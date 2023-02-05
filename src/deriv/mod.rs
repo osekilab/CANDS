@@ -8,6 +8,7 @@ use crate::prelude::*;
 
 use derive_more::{ Deref, DerefMut };
 
+use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::fmt;
 
@@ -501,6 +502,89 @@ fn derive_by_transfer<T: Triggers>(stage1: &Stage, stage2: &Stage) -> bool {
 
 
 
+/*
+    For X, Y both equal to or contained in some [Spec; TP] in SO,
+    the number of occurrences of X must equal the number of occurrences of Y.
+
+    The way `contained_sos` visits SOs guarantee that it counts the number of
+    occurrences of each SO.
+ */
+fn contains_bad_chain<'a, T: Triggers>(so: &'a SyntacticObject, w: &Workspace) -> Result<(), HashMap<&'a SyntacticObject, usize>> {
+    //  Set of all SOs reflexively contained in some [Spec; TP] contained in `so`.
+    let sos_in_spec_tp: Set<_> = so.contained_sos(true, true)
+        //  Transform into all [Spec; TP]s.
+        .filter_map(|so| {
+            match so {
+                SyntacticObject::Set(set) => {
+                    match set.len() == 2 {
+                        true => {
+                            let mut it = set.iter();
+
+                            let x1 = it.next().unwrap();
+                            let x2 = it.next().unwrap();
+                            assert!(it.next().is_none());
+
+                            //  Maybe x1 is Spec, and x2 is T(P)?
+                            if x1.is_specifier_of::<T>(x2, so, w) {
+                                if let Ok(label) = T::label_of(x2, w) {
+                                    if label.li.syn.contains(&tense_feature!()) {
+                                        return Some(x1);
+                                    }
+                                }
+                            }
+
+                            //  Maybe x2 is Spec, and x1 is T(P)?
+                            if x2.is_specifier_of::<T>(x1, so, w) {
+                                if let Ok(label) = T::label_of(x1, w) {
+                                    if label.li.syn.contains(&tense_feature!()) {
+                                        return Some(x2);
+                                    }
+                                }
+                            }
+
+                            None
+                        },
+                        false => None,
+                    }
+                },
+                _ => None,
+            }
+        })
+        //  Get all SOs contained in some [Spec; TP]s.
+        .flat_map(|so| so.contained_sos(true, true))
+        .collect();
+
+    //  Occurrences of all SOs contained in `so`.
+    let cnts: HashMap<&'a SyntacticObject, usize> =
+        so.contained_sos(true, true)
+            .filter(|so| sos_in_spec_tp.contains(so))
+            .fold(HashMap::new(), |mut map, so| {
+                match map.get_mut(&so) {
+                    Some(cnt) => { *cnt += 1; },
+                    None => { map.insert(so, 1); },
+                }
+                map
+            });
+        
+    let mut same_cnt = None;
+    for (_, cnt) in cnts.iter() {
+        match same_cnt {
+            Some(same_cnt) => {
+                if same_cnt != *cnt {
+                    return Err(cnts);
+                }
+            },
+            None => {
+                same_cnt = Some(*cnt);
+            },
+        }
+    }
+    
+    Ok(())
+}
+
+
+
 /// Check if the sequence of stages `stages` is a derivation from the I-language `il`.
 /// 
 /// From Definition 14, C&S 2016, p. 48. The original derivation, given below, defines a derivation with respect to just a lexicon, but since it invokes syntactic operations like Select and Merge, we define it with respect to an I-language, which includes a UG as well as a lexicon.
@@ -562,9 +646,6 @@ pub fn is_derivation<T: Triggers>(il: &ILanguage<T>, stages: &[Stage]) -> bool {
 
         let stage1 = &stage_pair[0];
         let stage2 = &stage_pair[1];
-
-        let Stage { la: la1, w: w1 } = stage1;
-        let Stage { la: la2, w: w2 } = stage2;
 
         my_debug!("------------------------------------------------------------");
         my_debug!(
@@ -644,7 +725,26 @@ pub fn is_derivation<T: Triggers>(il: &ILanguage<T>, stages: &[Stage]) -> bool {
                     .fold(format!(""), |a, b| format!("{}\n{}", a, b))
             );
             eprintln!(" :: Workspace:\n{}", stage2.w);
-            // return false;
+            return false;
+        }
+        
+        my_debug!("------------------------------------------------------------");
+        my_debug!("Checking if the 2nd workspace contains a bad chain...");
+
+        let bad_chain = stage2.w.iter()
+            .map(|root| contains_bad_chain::<T>(root, &stage2.w))
+            .fold(Ok(()), |res1, res2| {
+                res1.and(res2)
+            });
+
+        if let Err(cnts) = bad_chain {
+            eprintln!("The 2nd workspace contains a bad chain:");
+            eprintln!(" :: Workspace: {}", stage2.w);
+            eprintln!("Bad chains:");
+            for (so, cnt) in cnts {
+                eprintln!(" :: Appeared {} times:", cnt);
+                eprintln!(" :: {}", SOPrefixFormatter::new(so, 4));
+            }
             return false;
         }
     }
