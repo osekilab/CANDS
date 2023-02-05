@@ -239,6 +239,69 @@ fn derive_by_select(stage1: &Stage, stage2: &Stage) -> bool {
 
 
 
+/*
+    For Move B from within A to form { A, B }, the number of occurrences of B
+    in A must exceed the number of occurrences of [Spec; TP] in A that contains B.
+ */
+fn is_good_move<T: Triggers>(head: &SyntacticObject, non_head: &SyntacticObject, w: &Workspace) -> bool {
+    //  Count all occurrences of B in A.
+    let non_head_cnt = head.contained_sos(true, true)
+        .filter(|&so| so == non_head)
+        .count();
+
+    //  All [Spec; TP]s in A.
+    let spec_tps: Set<_> = head.contained_sos(true, true)
+        .filter_map(|so| {
+            match so {
+                SyntacticObject::Set(set) => {
+                    match set.len() == 2 {
+                        true => {
+                            let mut it = set.iter();
+
+                            let x1 = it.next().unwrap();
+                            let x2 = it.next().unwrap();
+                            assert!(it.next().is_none());
+
+                            //  Maybe x1 is Spec, and x2 is T(P)?
+                            if x1.is_specifier_of::<T>(x2, so, w) {
+                                if let Ok(label) = T::label_of(x2, w) {
+                                    if label.li.syn.contains(&tense_feature!()) {
+                                        return Some(x1);
+                                    }
+                                }
+                            }
+
+                            //  Maybe x2 is Spec, and x1 is T(P)?
+                            if x2.is_specifier_of::<T>(x1, so, w) {
+                                if let Ok(label) = T::label_of(x1, w) {
+                                    if label.li.syn.contains(&tense_feature!()) {
+                                        return Some(x2);
+                                    }
+                                }
+                            }
+
+                            None
+                        },
+                        false => None,
+                    }
+                },
+                _ => None,
+            }
+        })
+        .collect();
+
+    //  Count all occurrences of [Spec; TP]s in A that contains B.
+    let non_head_in_spec_tp_cnt = head.contained_sos(true, true)
+        .filter(|&so| spec_tps.contains(so))
+        .flat_map(|so| so.contained_sos(true, true))
+        .filter(|&so| so == non_head)
+        .count();
+
+    non_head_cnt > non_head_in_spec_tp_cnt
+}
+
+
+
 /// >Derive-by-Merge: $\\textrm{LA}\_i = \\textrm{LA}\_{i+1}$ and the following conditions hold for some $A, B$:
 /// >    1.  $A \\in W\_i$,
 /// >    2.  either $A$ contains $B$ or $W\_i$ immediately contains $B$, and
@@ -276,6 +339,8 @@ fn derive_by_merge<T: Triggers>(stage1: &Stage, stage2: &Stage) -> bool {
             //  Iterate over some B, i.e. all SOs contained in A ...
             my_debug!("Search for B. Iterate over all SOs contained by A...");
             let res = a.contained_sos(false, true)
+                //  ... which follows our movement constraint ...
+                .filter(|&b| is_good_move::<T>(a, b, &stage2.w))
                 //  ... as well as all SOs immediately contained in W1.
                 .chain(w1.0.iter())
                 //  Check if the final condition match.

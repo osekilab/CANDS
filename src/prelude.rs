@@ -19,6 +19,7 @@ pub(crate) use crate::feature::{
     Feature, f, fset, fvec,
     uwh_feature,
     iwh_feature,
+    tense_feature,
     epp_feature,
     comp_feature,
     strong_light_verb_feature,
