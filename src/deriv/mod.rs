@@ -552,15 +552,15 @@ fn contains_bad_chain<'a, T: Triggers>(so: &'a SyntacticObject, w: &Workspace) -
         //  Get all SOs contained in some [Spec; TP]s.
         .collect();
 
-    //  Occurrences of all SOs contained in some [Spec; TP] (not necessarily
-    //  the same!) in `so`.
+    //  Occurrences of all SOs that are either equal to or contained in some
+    //  (not necessarily the same!) [Spec; TP] in `so`.
     let cnts: HashMap<&'a SyntacticObject, usize> =
         so.contained_sos(true, true)
             //  We can take out this filter and it will still work, but it will
             //  reduce the search space later.
-            .filter(|so| {
+            .filter(|&so| {
                 spec_tps.iter()
-                    .any(|&spec_tp| spec_tp.contains(so))
+                    .any(|&spec_tp| (so == spec_tp) || spec_tp.contains(&so))
             })
             .fold(HashMap::new(), |mut map, so| {
                 match map.get_mut(&so) {
@@ -571,19 +571,10 @@ fn contains_bad_chain<'a, T: Triggers>(so: &'a SyntacticObject, w: &Workspace) -
             });
 
     for spec_tp in spec_tps {
-        let mut same_cnt = None;
+        let spec_tp_cnt = *cnts.get(&spec_tp).unwrap();
         for (&so, cnt) in cnts.iter() {
-            if spec_tp.contains(so) {
-                match same_cnt {
-                    Some(same_cnt) => {
-                        if same_cnt != *cnt {
-                            return Err(cnts);
-                        }
-                    },
-                    None => {
-                        same_cnt = Some(*cnt);
-                    },
-                }
+            if spec_tp.contains(so) && (*cnt != spec_tp_cnt) {
+                return Err(cnts);
             }
         }
     }
