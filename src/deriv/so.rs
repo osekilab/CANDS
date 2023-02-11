@@ -26,6 +26,10 @@ pub enum SyntacticObject {
         pf: Vec<Feature>,
         lf: Set<Feature>,
     },
+    WithFeature {
+        so: Box<SyntacticObject>,
+        f: SyntacticFeature,
+    }
 }
 
 
@@ -84,6 +88,10 @@ macro_rules! so {
         SyntacticObject::Transfer { so: Box::new($so), pf: $pf, lf: $lf }
     };
 
+    ($so:expr ; $f:expr) => {
+        SyntacticObject::WithFeature { so: Box::new($so), f: $f }
+    };
+
     ($($so:expr,)*) => {
         SyntacticObject::Set(set!($($so),*))
     };
@@ -124,6 +132,7 @@ impl SyntacticObject {
             //  Transfer(PF, LF) is not a syntactic object, so it does not immediately contain anything
             &SyntacticObject::Transfer { ref so, .. } =>
                 **so == *a,
+            &SyntacticObject::WithFeature { ref so, .. } => **so == *a,
         }
     }
 
@@ -144,6 +153,8 @@ impl SyntacticObject {
                 b.iter().any(|so| so.contains(a))
             },
             &SyntacticObject::Transfer { ref so, .. } =>
+                (**so == *a) || so.contains(a),
+            &SyntacticObject::WithFeature { ref so, .. } =>
                 (**so == *a) || so.contains(a),
         }
     }
@@ -210,6 +221,8 @@ impl SyntacticObject {
                 (set.len() == 2)
             },
             &SyntacticObject::Transfer { ref so, .. } =>
+                so.is_binary_branching(),
+            &SyntacticObject::WithFeature { ref so, .. } =>
                 so.is_binary_branching(),
         }
     }
@@ -294,6 +307,13 @@ impl SyntacticObject {
                 write!(f, "{} ┃ LF: {{ {} }}\n", prefix2, lf.iter().map(|f| f.0.to_owned()).reduce(|a, b| format!("{}, {}", a, b)).unwrap_or_else(|| format!("")))?;
                 write!(f, "{} ┗{}{}", prefix2, BORDER, if newline { "\n" } else { "" })
             },
+
+            &SyntacticObject::WithFeature { ref so, f: ref feature } => {
+                let newprefix1 = format!("{}{}", prefix1, if first { " ╔" } else { "─╦" });
+                let newprefix2 = format!("{} ║", prefix2);
+                so.fmt_with_prefix(&newprefix1, &newprefix2, true, false, f)?;
+                write!(f, "{} ╚─ {}{}", prefix2, feature, if newline { "\n" } else { "" })
+            },
         }
     }
 
@@ -324,7 +344,7 @@ impl SyntacticObject {
     }
 
     pub fn is_complement_of<T: Triggers>(&self, head: &SyntacticObject, under: &SyntacticObject, w: &Workspace) -> bool {
-        match triggered_merge::<T>(head.clone(), self.clone(), w) {
+        match triggered_merge_with_so::<T>(head.clone(), self.clone(), w) {
             Ok(merged) => {
                 (under == &merged) && head.is_lexical_item_token()
             },
@@ -333,7 +353,7 @@ impl SyntacticObject {
     }
 
     pub fn is_specifier_of<T: Triggers>(&self, head: &SyntacticObject, under: &SyntacticObject, w: &Workspace) -> bool {
-        match triggered_merge::<T>(head.clone(), self.clone(), w) {
+        match triggered_merge_with_so::<T>(head.clone(), self.clone(), w) {
             Ok(merged) => {
                 (under == &merged) && head.is_set()
             },
@@ -386,6 +406,9 @@ impl<'a> Iterator for ContainedSyntacticObjects<'a> {
                         if !self.pic_compliant {
                             self.stack.push(so);
                         }
+                    },
+                    &SyntacticObject::WithFeature { ref so, .. } => {
+                        self.stack.push(so);
                     },
                     _ => (),
                 }

@@ -16,16 +16,16 @@ pub(crate) use crate::utils::{
     inc, dec, my_trace, my_debug, my_info, my_error,
 };
 pub(crate) use crate::feature::{
-    Feature, f, fset, fvec,
+    Feature, SyntacticFeature, f, synf, fset, synfset, fvec,
     wh_feature,
     epp_feature,
     comp_feature,
     strong_light_verb_feature,
     CATSEL_FEATURE_PREFIX
 };
-pub(crate) use crate::ops::{ select, token_based_merge, triggered_merge, is_strong_phase, transfer, cyclic_transfer };
+pub(crate) use crate::ops::{ select, token_based_merge, triggered_merge_with_so, triggered_merge_with_f, is_strong_phase, transfer, cyclic_transfer };
 pub(crate) use crate::deriv::{
-    Lexicon, UniversalGrammar, ILanguage, Stage, is_derivation, Workspace, w,
+    Lexicon, UniversalGrammar, ILanguage, Stage, is_derivation, LexicalArray, Workspace, w,
     li::{ LexicalItem, li },
     lit::{ LexicalItemToken, lit },
     so::{ SyntacticObject, ContainedSyntacticObjects, SOPrefixFormatter, so },

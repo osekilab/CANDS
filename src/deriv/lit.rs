@@ -75,7 +75,7 @@ mod tests {
 
             let li2 = LexicalItem::new(
                 fset!(),
-                fset!("N"),
+                synfset!("N"),
                 fvec!("Alex"),
                 None,
             );
@@ -94,7 +94,7 @@ mod tests {
 
             let li2 = LexicalItem::new(
                 fset!(),
-                fset!("N"),
+                synfset!("N"),
                 fvec!("Alex"),
                 Some(format!("Alex"))
             );

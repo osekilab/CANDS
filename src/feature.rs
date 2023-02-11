@@ -2,10 +2,10 @@ use std::fmt;
 
 
 
-macro_rules! wh_feature { () => { f!("wh") }; }
-macro_rules! epp_feature { () => { f!("EPP") }; }
-macro_rules! comp_feature { () => { f!("C") } }
-macro_rules! strong_light_verb_feature { () => { f!("v*") } }
+macro_rules! wh_feature { () => { synf!("wh") }; }
+macro_rules! epp_feature { () => { synf!("EPP") }; }
+macro_rules! comp_feature { () => { synf!("C") } }
+macro_rules! strong_light_verb_feature { () => { synf!("v*") } }
 
 pub(crate) use { wh_feature, epp_feature, comp_feature, strong_light_verb_feature };
 
@@ -36,6 +36,76 @@ impl Feature {
 
 
 
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum SyntacticFeature {
+    Normal(Feature),
+    Valuable {
+        interpretable: bool,
+        feature: Feature,
+        value: String,
+    },
+}
+
+
+
+impl fmt::Display for SyntacticFeature {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            SyntacticFeature::Normal(feature) =>
+                write!(f, "{}", feature),
+
+            SyntacticFeature::Valuable { interpretable, feature, value } =>
+                write!(f, "{}{}:{}",
+                    if *interpretable { "i" } else { "u" },
+                    feature,
+                    value,
+                ),
+        }
+    }
+}
+
+
+
+impl SyntacticFeature {
+    pub fn is_interpretable(&self) -> bool {
+        match self {
+            SyntacticFeature::Valuable { interpretable: true, .. } => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_uninterpretable(&self) -> bool {
+        match self {
+            SyntacticFeature::Valuable { interpretable: false, .. } => true,
+            _ => false,
+        }
+    }
+
+    pub fn matches(&self, other: &SyntacticFeature) -> bool {
+        match (self, other) {
+            (
+                SyntacticFeature::Valuable {
+                    feature: feature1,
+                    value: value1,
+                    ..
+                },
+                SyntacticFeature::Valuable {
+                    feature: feature2,
+                    value: value2,
+                    ..
+                }
+            ) => {
+                (feature1 == feature2) && (value1 == value2)
+            },
+            _ => false,
+        }
+    }
+}
+
+
+
+
 /// Macro to generate a feature.
 ///
 /// # Example
@@ -51,6 +121,33 @@ macro_rules! f {
 }
 
 pub(crate) use f;
+
+
+
+/// Macro to generate a feature.
+///
+/// # Example
+///
+/// ```
+/// cands::f!("wh")
+/// ```
+#[macro_export]
+macro_rules! synf {
+    ($literal:expr) => {
+        SyntacticFeature::Normal(Feature::new(String::from($literal)))
+    };
+
+    ($interpretable:expr; $feature:expr; $value:expr) => {
+        SyntacticFeature::Valuable {
+            interpretable: $interpretable,
+            feature: f!($feature),
+            value: String::from($value),
+        }
+    };
+}
+
+pub(crate) use synf;
+
 
 
 
@@ -71,6 +168,26 @@ macro_rules! fset {
 }
 
 pub(crate) use fset;
+
+
+
+/// Macro to generate a feature set.
+/// 
+/// # Example
+/// 
+/// ```
+/// fset!("n", "+voiced", "EPP")
+/// ```
+#[macro_export]
+macro_rules! synfset {
+    ($($literal:expr),*) => {
+        {
+            set!( $(synf!($literal)),* )
+        }
+    };
+}
+
+pub(crate) use synfset;
 
 
 

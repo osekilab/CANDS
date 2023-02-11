@@ -1,5 +1,5 @@
 use crate::utils::{ Set };
-use crate::feature::{ Feature };
+use crate::feature::{ Feature, SyntacticFeature };
 
 use std::fmt;
 
@@ -17,7 +17,7 @@ pub struct LexicalItem {
     pub sem: Set<Feature>,
 
     /// Syntactic features.
-    pub syn: Set<Feature>,
+    pub syn: Set<SyntacticFeature>,
 
     /// Phonological features.
     pub phon: Vec<Feature>,
@@ -31,7 +31,7 @@ pub struct LexicalItem {
 impl LexicalItem {
     pub fn new(
         sem: Set<Feature>,
-        syn: Set<Feature>,
+        syn: Set<SyntacticFeature>,
         phon: Vec<Feature>,
         shorthand: Option<String>,
     ) -> Self {
@@ -103,7 +103,7 @@ macro_rules! li {
     ($($sem:expr),*; $($syn:expr),*; $($phon:expr),*) => {
         LexicalItem::new(
             fset!($($sem),*),
-            fset!($($syn),*),
+            synfset!($($syn),*),
             fvec!($($phon),*),
             None
         )
@@ -112,7 +112,7 @@ macro_rules! li {
     ($($sem:expr),*; $($syn:expr),*; $($phon:expr),*; $shorthand:expr) => {
         LexicalItem::new(
             fset!($($sem),*),
-            fset!($($syn),*),
+            synfset!($($syn),*),
             fvec!($($phon),*),
             Some(String::from($shorthand))
         )
@@ -121,7 +121,7 @@ macro_rules! li {
     ($shorthand:expr) => {
         LexicalItem::new(
             fset!(),
-            fset!(),
+            synfset!(),
             fvec!(),
             Some(String::from($shorthand))
         )
@@ -148,7 +148,7 @@ mod tests {
 
             let li2 = LexicalItem {
                 sem:        fset!(),
-                syn:        fset!("N"),
+                syn:        synfset!("N"),
                 phon:       fvec!("Alex"),
                 shorthand:  None,
             };
@@ -166,7 +166,7 @@ mod tests {
 
             let li2 = LexicalItem {
                 sem:        fset!(),
-                syn:        fset!("N"),
+                syn:        synfset!("N"),
                 phon:       fvec!("Alex"),
                 shorthand:  Some(format!("Alex")),
             };
@@ -183,7 +183,7 @@ mod tests {
 
             let li2 = LexicalItem {
                 sem:        fset!(),
-                syn:        fset!(),
+                syn:        synfset!(),
                 phon:       fvec!(),
                 shorthand:  Some(format!("Alex"))
             };

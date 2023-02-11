@@ -22,13 +22,13 @@ use std::fmt;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct UniversalGrammar<T: Triggers> {
     pub phon_f:     Set<Feature>,
-    pub syn_f:      Set<Feature>,
+    pub syn_f:      Set<SyntacticFeature>,
     pub sem_f:      Set<Feature>,
     t:              PhantomData<T>,
 }
 
 impl<T: Triggers> UniversalGrammar<T> {
-    pub fn new(phon_f: Set<Feature>, syn_f: Set<Feature>, sem_f: Set<Feature>) -> Self {
+    pub fn new(phon_f: Set<Feature>, syn_f: Set<SyntacticFeature>, sem_f: Set<Feature>) -> Self {
         Self {
             phon_f, syn_f, sem_f, t: PhantomData::default()
         }
@@ -288,7 +288,7 @@ fn derive_by_merge<T: Triggers>(stage1: &Stage, stage2: &Stage) -> bool {
                     w.0.remove(a);
                     w.0.remove(b);
 
-                    triggered_merge::<T>(a.clone(), b.clone(), w1)
+                    triggered_merge_with_so::<T>(a.clone(), b.clone(), w1)
                         // .map_or_else(
                         //     |e| {
                         //         my_debug!("Merge failed with the following error: {}", e);
@@ -312,6 +312,54 @@ fn derive_by_merge<T: Triggers>(stage1: &Stage, stage2: &Stage) -> bool {
                 my_info!("This pair of stages is derived by Merge(A, B),");
                 my_info!("where A = {}", SOPrefixFormatter::new(&a, 10));
                 my_info!("  and B = {}", SOPrefixFormatter::new(b, 10));
+
+                return true;
+            }
+            
+            inc!();
+            //  Iterate over some B, i.e. all feature contained in W1 ...
+            my_debug!("Search for B. Iterate over all features contained in the workspace...");
+            let res = w1.0.iter()
+                .flat_map(|so| so.contained_sos(true, true))
+                .filter_map(|so| {
+                    match so {
+                        SyntacticObject::LexicalItemToken(lit) => Some(lit),
+                        _ => None,
+                    }
+                })
+                .flat_map(|lit| lit.li.syn.iter())
+                //  Check if the final condition match.
+                .find(|&b| {
+                    my_debug!("Try B = {}", b);
+                    let mut w = w1.clone();
+                    w.0.remove(a);
+
+                    triggered_merge_with_f::<T>(a.clone(), b.clone(), w1)
+                        // .map_or_else(
+                        //     |e| {
+                        //         my_debug!("Merge failed with the following error: {}", e);
+                        //         false
+                        //     },
+                        //     move |ab| {
+                        .map_or(false, move |ab| {
+                                my_debug!("Merge(A, B) works.");
+                                my_debug!(
+                                    "Merge(A, B) = {}",
+                                    SOPrefixFormatter::new(&ab, 14)
+                                );
+                                w.0.insert(ab);
+                                w2 == &w
+                            }
+                        )
+                });
+            dec!();
+
+            if let Some(b) = res {
+                my_info!("This pair of stages is derived by Merge(A, B),");
+                my_info!("where A = {}", SOPrefixFormatter::new(&a, 10));
+                my_info!("  and B = {}", b);
+
+                return true;
             }
 
             res.is_some()

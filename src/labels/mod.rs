@@ -15,7 +15,7 @@ pub trait Triggers {
     /// >1.  If $A$ is a lexical item token with $n$ trigger features, then $\\textrm{Triggers} (A)$ returns all of those $n$ trigger features.
     /// >2.  If $A$ is a set, then $A = \\{ B, C \\}$ where $\\textrm{Triggers} (B)$ is nonempty, and $\\textrm{Triggers} (C) = \\varnothing$, and $\\textrm{Triggers} (A) = \\textrm{Triggers} (B) \setminus \\{ \\textrm{TF} \\}$, for some trigger feature $\\textrm{TF} \\in \\textrm{Triggers} B)$.
     /// >3.  Otherwise, $\\textrm{Triggers} (A)$ is undefined.
-    fn triggers(so: &SyntacticObject, w: &Workspace) -> Result<Set<Feature>, ()>;
+    fn triggers(so: &SyntacticObject, w: &Workspace) -> Result<Set<SyntacticFeature>, ()>;
 
     /// Label.
     /// 
@@ -72,6 +72,8 @@ pub trait Triggers {
             },
             &SyntacticObject::Transfer{ ref so, .. } =>
                 Self::label_of(so, w),
+            &SyntacticObject::WithFeature { ref so, .. } =>
+                Self::label_of(so, w),
         }
     }
 }
@@ -86,7 +88,7 @@ pub struct BasicTriggers;
 
 impl BasicTriggers {
     /// Check one feature.
-    fn check_tf(mut from: Set<Feature>, wrt: &SyntacticObject, w: &Workspace) -> Result<Set<Feature>, ()> {
+    fn check_tf_with_so(mut from: Set<SyntacticFeature>, wrt: &SyntacticObject, w: &Workspace) -> Result<Set<SyntacticFeature>, ()> {
         //  Get the syntactic features of the label of `wrt`
         let wrt_syn = &Self::label_of(wrt, w)?.li.syn;
         // eprintln!("Check-TF: wrt_syn = {:?}", wrt_syn);
@@ -100,10 +102,15 @@ impl BasicTriggers {
         //  Check category selection
         if let Some(catsel_feature) = from.iter()
             .find(|&f| {
-                //  If `f` were "=v*", then `cat_feature` would be "v*".
-                let cat_feature = f!(&f.0[CATSEL_FEATURE_PREFIX.len()..]);
-                f.0.starts_with(CATSEL_FEATURE_PREFIX) &&
-                (wrt_syn.contains(&cat_feature))
+                if let SyntacticFeature::Normal(f) = f {
+                    //  If `f` were "=v*", then `cat_feature` would be "v*".
+                    let cat_feature = synf!(&f.0[CATSEL_FEATURE_PREFIX.len()..]);
+                    f.0.starts_with(CATSEL_FEATURE_PREFIX) &&
+                    (wrt_syn.contains(&cat_feature))
+                }
+                else {
+                    false
+                }
             })
             .map(|f| f.clone()) // borrowck wins
         {
@@ -119,12 +126,30 @@ impl BasicTriggers {
 
         Err(())
     }
+
+
+
+    fn check_tf_with_synf(mut from: Set<SyntacticFeature>, wrt: &SyntacticFeature) -> Result<Set<SyntacticFeature>, ()> {
+        let synf = from.iter()
+            .find(|&synf| {
+                synf.matches(wrt)
+            })
+            .cloned();
+
+        match synf {
+            Some(synf) => {
+                from.remove(&synf);
+                Ok(from)
+            },
+            None => Err(()),
+        }
+    }
 }
 
 
 
 impl Triggers for BasicTriggers {
-    fn triggers(so: &SyntacticObject, w: &Workspace) -> Result<Set<Feature>, ()> {
+    fn triggers(so: &SyntacticObject, w: &Workspace) -> Result<Set<SyntacticFeature>, ()> {
         // eprintln!("Triggers: so =\n{}", so);
 
         match so {
@@ -134,7 +159,10 @@ impl Triggers for BasicTriggers {
                         .filter(|&f| {
                             f == &wh_feature!() ||
                             f == &epp_feature!() ||
-                            f.0.starts_with(CATSEL_FEATURE_PREFIX)
+                            if let SyntacticFeature::Normal(f) = f {
+                                f.0.starts_with(CATSEL_FEATURE_PREFIX)
+                            } else { false } ||
+                            f.is_uninterpretable()
                         })
                         .cloned()
                         .collect()
@@ -162,13 +190,13 @@ impl Triggers for BasicTriggers {
 
                         if !tfs_b.is_empty() && tfs_c.is_empty() {
                             // eprintln!("Triggers: Triggers(B) != ∅, Triggers(C) == ∅");
-                            let res = Self::check_tf(tfs_b, c, w);
+                            let res = Self::check_tf_with_so(tfs_b, c, w);
                             // eprintln!("Triggers: Triggers(so) = {:?}", res);
                             res
                         }
                         else if !tfs_c.is_empty() && tfs_b.is_empty() {
                             // eprintln!("Triggers: Triggers(C) != ∅, Triggers(B) == ∅");
-                            let res = Self::check_tf(tfs_c, b, w);
+                            let res = Self::check_tf_with_so(tfs_c, b, w);
                             // eprintln!("Triggers: Triggers(so) = {:?}", res);
                             res
                         }
@@ -185,6 +213,10 @@ impl Triggers for BasicTriggers {
             },
             &SyntacticObject::Transfer{ ref so, .. } =>
                 Self::triggers(&so, w),
+            &SyntacticObject::WithFeature { ref so, ref f } => {
+                let tfs = Self::triggers(so, w)?;
+                Self::check_tf_with_synf(tfs, f)
+            },
         }
     }
 }

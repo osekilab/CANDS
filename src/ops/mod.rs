@@ -54,7 +54,7 @@ pub fn token_based_merge(a: SyntacticObject, b: SyntacticObject, _w: &Workspace)
 /// From Definition 27 in C&S 2016, p. 64:
 /// 
 /// >Given any two distinct syntactic objects $A, B$, where $\\textrm{Triggers} (A) \neq \\varnothing$ and $\\textrm{Triggers} (B) = \\varnothing$, $\\textrm{Merge} (A, B) = \\{ A, B \\}$.
-pub fn triggered_merge<T: Triggers>(a: SyntacticObject, b: SyntacticObject, w: &Workspace) -> Result<SyntacticObject, String> {
+pub fn triggered_merge_with_so<T: Triggers>(a: SyntacticObject, b: SyntacticObject, w: &Workspace) -> Result<SyntacticObject, String> {
     // eprintln!("Triggered Merge: A =\n{}", a);
     // eprintln!("Triggered Merge: B =\n{}", b);
 
@@ -88,6 +88,19 @@ pub fn triggered_merge<T: Triggers>(a: SyntacticObject, b: SyntacticObject, w: &
 
     let pair = set!( a, b );
     Ok(SyntacticObject::Set(pair))
+}
+
+
+
+pub fn triggered_merge_with_f<T: Triggers>(a: SyntacticObject, b: SyntacticFeature, w: &Workspace) -> Result<SyntacticObject, String> {
+    let tfs_a = T::triggers(&a, w).map_err(|_| format!("tf a fail"))?;
+    if tfs_a.is_empty() {
+        return Err(
+            format!("TriggeredMerge: error.\nfor Merge (A, B), A must have at least one trigger feature.")
+        );
+    }
+
+    Ok(SyntacticObject::WithFeature { so: Box::new(a), f: b })
 }
 
 
@@ -160,7 +173,7 @@ fn transfer_pf<T: Triggers>(phase: &SyntacticObject, so: &SyntacticObject, w: &W
                         pf2
                     }
                     else {
-                        panic!()
+                        panic!("\nx1 = {}\nx2 = {}", SOPrefixFormatter::new(x1, 5), SOPrefixFormatter::new(x2, 5));
                     }
                 },
                 (Some(pf1), None) => pf1,
@@ -170,6 +183,8 @@ fn transfer_pf<T: Triggers>(phase: &SyntacticObject, so: &SyntacticObject, w: &W
         },
 
         &SyntacticObject::Transfer { ref pf, .. } => pf.clone(),
+        &SyntacticObject::WithFeature { ref so, .. } =>
+            transfer_pf::<T>(phase, so, w),
     };
 
     // eprintln!("TransferPF: Result = {:?}", res);
@@ -193,7 +208,8 @@ fn transfer_lf(phase: &SyntacticObject, so: &SyntacticObject) -> Set<Feature> {
                 )
         },
 
-        &SyntacticObject::Transfer { ref lf, .. } => lf.clone()
+        &SyntacticObject::Transfer { ref lf, .. } => lf.clone(),
+        &SyntacticObject::WithFeature { ref so, .. } => transfer_lf(phase, so),
     }
 }
 

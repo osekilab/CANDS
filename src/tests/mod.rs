@@ -1,7 +1,12 @@
 //! A bunch of tests.
 
+use crate::prelude::*;
+
 #[cfg(test)]
 mod macros;
+
+#[cfg(test)]
+mod agree;
 
 #[cfg(test)]
 mod basic_select_tests {
@@ -13,19 +18,46 @@ mod basic_select_tests {
     }
 }
 
+
+
+fn init_logger() {
+    let _ = env_logger::builder().is_test(true).try_init();
+}
+
+
+
+fn make_word(syn: Set<SyntacticFeature>, phon: Vec<Feature>) -> LexicalItem {
+    LexicalItem::new(
+        phon.clone().into_iter().collect(),
+        syn,
+        phon,
+        None
+    )
+}
+
+
+
+fn make_empty(syn: Set<SyntacticFeature>, sem: Set<Feature>) -> LexicalItem {
+    LexicalItem::new(
+        sem,
+        syn,
+        vec![],
+        None
+    )
+}
+
+
+
 #[cfg(test)]
 mod derivck_tests {
     use crate::deriv::LexicalArray;
+    use crate::tests::init_logger;
     use crate::{f, fset, fvec, set};
     use crate::prelude::*;
 
-    fn init() {
-        let _ = env_logger::builder().is_test(true).try_init();
-    }
-
     #[test]
     fn test1() {
-        init();
+        init_logger();
 
         let lex = set!(
             li!("Mary"; "D"; "Mary"),
@@ -37,7 +69,7 @@ mod derivck_tests {
     
         let ug = UniversalGrammar::<BasicTriggers>::new(
             fset!("Mary", "dances", ""),
-            fset!("D", "V", "v*", "T", "C", "=D", "=V", "=v*", "=T"),
+            synfset!("D", "V", "v*", "T", "C", "=D", "=V", "=v*", "=T"),
             fset!("Mary", "dances", "v*", "PRES", "C")
         );
     
