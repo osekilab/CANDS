@@ -210,7 +210,7 @@ pub fn transfer<T: Triggers>(phase: &SyntacticObject, so: SyntacticObject, w: &W
 
 
 
-fn unwind_and_transfer<T: Triggers>(mut so: SyntacticObject, head: &SyntacticObject, w: &Workspace) -> Result<SyntacticObject, SyntacticObject> {
+fn unwind_and_transfer<T: Triggers>(phase: &SyntacticObject, mut so: SyntacticObject, head: &SyntacticObject, w: &Workspace) -> Result<SyntacticObject, SyntacticObject> {
     enum Action {
         Unwind, TransferFirst, TransferSecond, Return,
     }
@@ -256,7 +256,7 @@ fn unwind_and_transfer<T: Triggers>(mut so: SyntacticObject, head: &SyntacticObj
             if let SyntacticObject::Set(vec) = so {
                 let (set, is_ok) = vec.into_iter()
                     .map(|so| {
-                        match unwind_and_transfer::<T>(so, head, w) {
+                        match unwind_and_transfer::<T>(phase, so, head, w) {
                             Ok(so) => (so, true),
                             Err(so) => (so, false),
                         }
@@ -286,8 +286,8 @@ fn unwind_and_transfer<T: Triggers>(mut so: SyntacticObject, head: &SyntacticObj
                 let x2 = it.next().unwrap().clone();
     
                 Ok(SyntacticObject::Set(match action {
-                    Action::TransferFirst => set!( transfer::<T>(&so, x1, w), x2 ),
-                    Action::TransferSecond => set!( x1, transfer::<T>(&so, x2, w) ),
+                    Action::TransferFirst => set!( transfer::<T>(phase, x1, w), x2 ),
+                    Action::TransferSecond => set!( x1, transfer::<T>(phase, x2, w) ),
                     _ => panic!(),
                 }))
             }
@@ -304,7 +304,7 @@ pub fn cyclic_transfer<T: Triggers>(so: SyntacticObject, w: &Workspace) -> Resul
     match T::label_of(&so, w) {
         Ok(label) => {
             let head = so!(label.clone());
-            unwind_and_transfer::<T>(so, &head, w).map_err(|_| ())
+            unwind_and_transfer::<T>(&so, so.clone(), &head, w).map_err(|_| ())
         },
         _ => {
             Err(())
