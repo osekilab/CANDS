@@ -31,3 +31,4 @@ pub(crate) use crate::deriv::{
     so::{ SyntacticObject, ContainedSyntacticObjects, SOPrefixFormatter, so },
 };
 pub(crate) use crate::labels::{ Triggers, BasicTriggers };
+pub(crate) use crate::conv::{ converges_ci, converges_sm, converges };

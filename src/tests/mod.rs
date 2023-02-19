@@ -30,9 +30,9 @@ mod derivck_tests {
         let lex = set!(
             li!("Mary"; "D"; "Mary"),
             li!("dances"; "V"; "dances"),
-            li!("v*"; "v*", "=V", "=D"; ""),
-            li!("PRES"; "T", "=v*"; ""),
-            li!("C"; "C", "=T"; "")
+            li!("v*"; "v*", "=V", "=D";),
+            li!("PRES"; "T", "=v*";),
+            li!("C"; "C", "=T";)
         );
     
         let ug = UniversalGrammar::<BasicTriggers>::new(
@@ -51,9 +51,9 @@ mod derivck_tests {
                 la: LexicalArray::new(set!(
                     lit!(li!("Mary"; "D"; "Mary"), 1),
                     lit!(li!("dances"; "V"; "dances"), 2),
-                    lit!(li!("v*"; "v*", "=V", "=D"; ""), 3),
-                    lit!(li!("PRES"; "T", "=v*"; ""), 4),
-                    lit!(li!("C"; "C", "=T"; ""), 5)
+                    lit!(li!("v*"; "v*", "=V", "=D";), 3),
+                    lit!(li!("PRES"; "T", "=v*";), 4),
+                    lit!(li!("C"; "C", "=T";), 5)
                 )),
                 w: Workspace::new(set!())
             },
@@ -61,9 +61,9 @@ mod derivck_tests {
             Stage {
                 la: LexicalArray::new(set!(
                     lit!(li!("Mary"; "D"; "Mary"), 1),
-                    lit!(li!("v*"; "v*", "=V", "=D"; ""), 3),
-                    lit!(li!("PRES"; "T", "=v*"; ""), 4),
-                    lit!(li!("C"; "C", "=T"; ""), 5)
+                    lit!(li!("v*"; "v*", "=V", "=D";), 3),
+                    lit!(li!("PRES"; "T", "=v*";), 4),
+                    lit!(li!("C"; "C", "=T";), 5)
                 )),
                 w: Workspace::new(set!(
                     so!(lit!(li!("dances"; "V"; "dances"), 2))
@@ -73,38 +73,38 @@ mod derivck_tests {
             Stage {
                 la: LexicalArray::new(set!(
                     lit!(li!("Mary"; "D"; "Mary"), 1),
-                    lit!(li!("PRES"; "T", "=v*"; ""), 4),
-                    lit!(li!("C"; "C", "=T"; ""), 5)
+                    lit!(li!("PRES"; "T", "=v*";), 4),
+                    lit!(li!("C"; "C", "=T";), 5)
                 )),
                 w: Workspace::new(set!(
                     so!(lit!(li!("dances"; "V"; "dances"), 2)),
-                    so!(lit!(li!("v*"; "v*", "=V", "=D"; ""), 3))
+                    so!(lit!(li!("v*"; "v*", "=V", "=D";), 3))
                 ))
             },
             
             Stage {
                 la: LexicalArray::new(set!(
                     lit!(li!("Mary"; "D"; "Mary"), 1),
-                    lit!(li!("PRES"; "T", "=v*"; ""), 4),
-                    lit!(li!("C"; "C", "=T"; ""), 5)
+                    lit!(li!("PRES"; "T", "=v*";), 4),
+                    lit!(li!("C"; "C", "=T";), 5)
                 )),
                 w: Workspace::new(set!(
                     so!(
                         so!(lit!(li!("dances"; "V"; "dances"), 2)),
-                        so!(lit!(li!("v*"; "v*", "=V", "=D"; ""), 3)),
+                        so!(lit!(li!("v*"; "v*", "=V", "=D";), 3)),
                     )
                 ))
             },
             
             Stage {
                 la: LexicalArray::new(set!(
-                    lit!(li!("PRES"; "T", "=v*"; ""), 4),
-                    lit!(li!("C"; "C", "=T"; ""), 5)
+                    lit!(li!("PRES"; "T", "=v*";), 4),
+                    lit!(li!("C"; "C", "=T";), 5)
                 )),
                 w: Workspace::new(set!(
                     so!(
                         so!(lit!(li!("dances"; "V"; "dances"), 2)),
-                        so!(lit!(li!("v*"; "v*", "=V", "=D"; ""), 3)),
+                        so!(lit!(li!("v*"; "v*", "=V", "=D";), 3)),
                     ),
                     so!(lit!(li!("Mary"; "D"; "Mary"), 1))
                 ))
@@ -112,14 +112,14 @@ mod derivck_tests {
             
             Stage {
                 la: LexicalArray::new(set!(
-                    lit!(li!("PRES"; "T", "=v*"; ""), 4),
-                    lit!(li!("C"; "C", "=T"; ""), 5)
+                    lit!(li!("PRES"; "T", "=v*";), 4),
+                    lit!(li!("C"; "C", "=T";), 5)
                 )),
                 w: Workspace::new(set!(
                     so!(
                         so!(
                             so!(lit!(li!("dances"; "V"; "dances"), 2)),
-                            so!(lit!(li!("v*"; "v*", "=V", "=D"; ""), 3)),
+                            so!(lit!(li!("v*"; "v*", "=V", "=D";), 3)),
                         ),
                         so!(lit!(li!("Mary"; "D"; "Mary"), 1)),
                     )
@@ -128,14 +128,14 @@ mod derivck_tests {
             
             Stage {
                 la: LexicalArray::new(set!(
-                    lit!(li!("C"; "C", "=T"; ""), 5)
+                    lit!(li!("C"; "C", "=T";), 5)
                 )),
                 w: Workspace::new(set!(
-                    so!(lit!(li!("PRES"; "T", "=v*"; ""), 4)),
+                    so!(lit!(li!("PRES"; "T", "=v*";), 4)),
                     so!(
                         so!(
                             so!(lit!(li!("dances"; "V"; "dances"), 2)),
-                            so!(lit!(li!("v*"; "v*", "=V", "=D"; ""), 3)),
+                            so!(lit!(li!("v*"; "v*", "=V", "=D";), 3)),
                         ),
                         so!(lit!(li!("Mary"; "D"; "Mary"), 1)),
                     )
@@ -144,15 +144,15 @@ mod derivck_tests {
             
             Stage {
                 la: LexicalArray::new(set!(
-                    lit!(li!("C"; "C", "=T"; ""), 5)
+                    lit!(li!("C"; "C", "=T";), 5)
                 )),
                 w: Workspace::new(set!(
                     so!(
-                        so!(lit!(li!("PRES"; "T", "=v*"; ""), 4)),
+                        so!(lit!(li!("PRES"; "T", "=v*";), 4)),
                         so!(
                             so!(
                                 so!(lit!(li!("dances"; "V"; "dances"), 2)),
-                                so!(lit!(li!("v*"; "v*", "=V", "=D"; ""), 3)),
+                                so!(lit!(li!("v*"; "v*", "=V", "=D";), 3)),
                             ),
                             so!(lit!(li!("Mary"; "D"; "Mary"), 1)),
                         ),
@@ -163,13 +163,13 @@ mod derivck_tests {
             Stage {
                 la: LexicalArray::new(set!()),
                 w: Workspace::new(set!(
-                    so!(lit!(li!("C"; "C", "=T"; ""), 5)),
+                    so!(lit!(li!("C"; "C", "=T";), 5)),
                     so!(
-                        so!(lit!(li!("PRES"; "T", "=v*"; ""), 4)),
+                        so!(lit!(li!("PRES"; "T", "=v*";), 4)),
                         so!(
                             so!(
                                 so!(lit!(li!("dances"; "V"; "dances"), 2)),
-                                so!(lit!(li!("v*"; "v*", "=V", "=D"; ""), 3)),
+                                so!(lit!(li!("v*"; "v*", "=V", "=D";), 3)),
                             ),
                             so!(lit!(li!("Mary"; "D"; "Mary"), 1)),
                         ),
@@ -181,13 +181,13 @@ mod derivck_tests {
                 la: LexicalArray::new(set!()),
                 w: Workspace::new(set!(
                     so!(
-                        so!(lit!(li!("C"; "C", "=T"; ""), 5)),
+                        so!(lit!(li!("C"; "C", "=T";), 5)),
                         so!(
-                            so!(lit!(li!("PRES"; "T", "=v*"; ""), 4)),
+                            so!(lit!(li!("PRES"; "T", "=v*";), 4)),
                             so!(
                                 so!(
                                     so!(lit!(li!("dances"; "V"; "dances"), 2)),
-                                    so!(lit!(li!("v*"; "v*", "=V", "=D"; ""), 3)),
+                                    so!(lit!(li!("v*"; "v*", "=V", "=D";), 3)),
                                 ),
                                 so!(lit!(li!("Mary"; "D"; "Mary"), 1)),
                             ),
@@ -195,9 +195,32 @@ mod derivck_tests {
                     )
                 ))
             },
+            
+            Stage {
+                la: LexicalArray::new(set!()),
+                w: Workspace::new(set!(
+                    so!(
+                        so!(
+                            so!(lit!(li!("C"; "C", "=T";), 5)),
+                            so!(
+                                so!(lit!(li!("PRES"; "T", "=v*";), 4)),
+                                so!(
+                                    so!(
+                                        so!(lit!(li!("dances"; "V"; "dances"), 2)),
+                                        so!(lit!(li!("v*"; "v*", "=V", "=D";), 3)),
+                                    ),
+                                    so!(lit!(li!("Mary"; "D"; "Mary"), 1)),
+                                ),
+                            ),
+                        ) =>
+                        fvec!( "Mary", "dances" ) ;
+                        fset!( "C", "PRES", "v*", "dances", "Mary" )
+                    )
+                ))
+            },
         ];
 
-        // std::env::set_var("RUST_LOG", "info");
         assert!(is_derivation(&il, &stages));
+        assert!(converges(&stages));
     }
 }

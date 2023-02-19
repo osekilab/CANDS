@@ -99,6 +99,7 @@ pub mod ops;
 pub mod deriv;
 pub mod prelude;
 pub mod labels;
+pub mod conv;
 // mod cli;
 
 
