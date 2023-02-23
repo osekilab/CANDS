@@ -231,6 +231,33 @@ fn test() {
             )),
         },
 
+        //  Transfer (vstarP, VP)
+        Stage {
+            la: LexicalArray::new(set!(
+                lit!(mary()),
+                lit!(about()),
+                lit!(story()),
+                lit!(a()),
+                lit!(X()),
+                lit!(Y()),
+                lit!(Past()),
+                lit!(C())
+            )),
+            w: Workspace::new(set!(
+                so!(
+                    so!(lit!(vstar())),
+                    so!(
+                        so!(
+                            so!(lit!(bothered())),
+                            so!(lit!(me())),
+                        ) =>
+                        fvec!( "bothered", "me" ) ;
+                        fset!( "bothered", "me" )
+                    ),
+                )
+            )),
+        },
+
         //  Select Mary
         Stage {
             la: LexicalArray::new(set!(
@@ -247,8 +274,12 @@ fn test() {
                 so!(
                     so!(lit!(vstar())),
                     so!(
-                        so!(lit!(bothered())),
-                        so!(lit!(me())),
+                        so!(
+                            so!(lit!(bothered())),
+                            so!(lit!(me())),
+                        ) =>
+                        fvec!( "bothered", "me" ) ;
+                        fset!( "bothered", "me" )
                     ),
                 )
             )),
@@ -270,8 +301,12 @@ fn test() {
                 so!(
                     so!(lit!(vstar())),
                     so!(
-                        so!(lit!(bothered())),
-                        so!(lit!(me())),
+                        so!(
+                            so!(lit!(bothered())),
+                            so!(lit!(me())),
+                        ) =>
+                        fvec!( "bothered", "me" ) ;
+                        fset!( "bothered", "me" )
                     ),
                 )
             )),
@@ -295,8 +330,12 @@ fn test() {
                 so!(
                     so!(lit!(vstar())),
                     so!(
-                        so!(lit!(bothered())),
-                        so!(lit!(me())),
+                        so!(
+                            so!(lit!(bothered())),
+                            so!(lit!(me())),
+                        ) =>
+                        fvec!( "bothered", "me" ) ;
+                        fset!( "bothered", "me" )
                     ),
                 )
             )),
@@ -320,8 +359,12 @@ fn test() {
                 so!(
                     so!(lit!(vstar())),
                     so!(
-                        so!(lit!(bothered())),
-                        so!(lit!(me())),
+                        so!(
+                            so!(lit!(bothered())),
+                            so!(lit!(me())),
+                        ) =>
+                        fvec!( "bothered", "me" ) ;
+                        fset!( "bothered", "me" )
                     ),
                 )
             )),
@@ -347,8 +390,12 @@ fn test() {
                 so!(
                     so!(lit!(vstar())),
                     so!(
-                        so!(lit!(bothered())),
-                        so!(lit!(me())),
+                        so!(
+                            so!(lit!(bothered())),
+                            so!(lit!(me())),
+                        ) =>
+                        fvec!( "bothered", "me" ) ;
+                        fset!( "bothered", "me" )
                     ),
                 )
             )),
@@ -374,8 +421,12 @@ fn test() {
                 so!(
                     so!(lit!(vstar())),
                     so!(
-                        so!(lit!(bothered())),
-                        so!(lit!(me())),
+                        so!(
+                            so!(lit!(bothered())),
+                            so!(lit!(me())),
+                        ) =>
+                        fvec!( "bothered", "me" ) ;
+                        fset!( "bothered", "me" )
                     ),
                 )
             )),
@@ -403,8 +454,12 @@ fn test() {
                 so!(
                     so!(lit!(vstar())),
                     so!(
-                        so!(lit!(bothered())),
-                        so!(lit!(me())),
+                        so!(
+                            so!(lit!(bothered())),
+                            so!(lit!(me())),
+                        ) =>
+                        fvec!( "bothered", "me" ) ;
+                        fset!( "bothered", "me" )
                     ),
                 )
             )),
@@ -433,8 +488,12 @@ fn test() {
                     so!(
                         so!(lit!(vstar())),
                         so!(
-                            so!(lit!(bothered())),
-                            so!(lit!(me())),
+                            so!(
+                                so!(lit!(bothered())),
+                                so!(lit!(me())),
+                            ) =>
+                            fvec!( "bothered", "me" ) ;
+                            fset!( "bothered", "me" )
                         ),
                     ),
                 )
@@ -464,8 +523,12 @@ fn test() {
                     so!(
                         so!(lit!(vstar())),
                         so!(
-                            so!(lit!(bothered())),
-                            so!(lit!(me())),
+                            so!(
+                                so!(lit!(bothered())),
+                                so!(lit!(me())),
+                            ) =>
+                            fvec!( "bothered", "me" ) ;
+                            fset!( "bothered", "me" )
                         ),
                     ),
                 )
@@ -496,8 +559,12 @@ fn test() {
                         so!(
                             so!(lit!(vstar())),
                             so!(
-                                so!(lit!(bothered())),
-                                so!(lit!(me())),
+                                so!(
+                                    so!(lit!(bothered())),
+                                    so!(lit!(me())),
+                                ) =>
+                                fvec!( "bothered", "me" ) ;
+                                fset!( "bothered", "me" )
                             ),
                         ),
                     ),
@@ -540,8 +607,12 @@ fn test() {
                             so!(
                                 so!(lit!(vstar())),
                                 so!(
-                                    so!(lit!(bothered())),
-                                    so!(lit!(me())),
+                                    so!(
+                                        so!(lit!(bothered())),
+                                        so!(lit!(me())),
+                                    ) =>
+                                    fvec!( "bothered", "me" ) ;
+                                    fset!( "bothered", "me" )
                                 ),
                             ),
                         ),
@@ -585,8 +656,12 @@ fn test() {
                             so!(
                                 so!(lit!(vstar())),
                                 so!(
-                                    so!(lit!(bothered())),
-                                    so!(lit!(me())),
+                                    so!(
+                                        so!(lit!(bothered())),
+                                        so!(lit!(me())),
+                                    ) =>
+                                    fvec!( "bothered", "me" ) ;
+                                    fset!( "bothered", "me" )
                                 ),
                             ),
                         ),
@@ -631,8 +706,12 @@ fn test() {
                                 so!(
                                     so!(lit!(vstar())),
                                     so!(
-                                        so!(lit!(bothered())),
-                                        so!(lit!(me())),
+                                        so!(
+                                            so!(lit!(bothered())),
+                                            so!(lit!(me())),
+                                        ) =>
+                                        fvec!( "bothered", "me" ) ;
+                                        fset!( "bothered", "me" )
                                     ),
                                 ),
                             ),
@@ -683,8 +762,12 @@ fn test() {
                                     so!(
                                         so!(lit!(vstar())),
                                         so!(
-                                            so!(lit!(bothered())),
-                                            so!(lit!(me())),
+                                            so!(
+                                                so!(lit!(bothered())),
+                                                so!(lit!(me())),
+                                            ) =>
+                                            fvec!( "bothered", "me" ) ;
+                                            fset!( "bothered", "me" )
                                         ),
                                     ),
                                 ),
@@ -736,8 +819,12 @@ fn test() {
                                     so!(
                                         so!(lit!(vstar())),
                                         so!(
-                                            so!(lit!(bothered())),
-                                            so!(lit!(me())),
+                                            so!(
+                                                so!(lit!(bothered())),
+                                                so!(lit!(me())),
+                                            ) =>
+                                            fvec!( "bothered", "me" ) ;
+                                            fset!( "bothered", "me" )
                                         ),
                                     ),
                                 ),
@@ -790,8 +877,12 @@ fn test() {
                                         so!(
                                             so!(lit!(vstar())),
                                             so!(
-                                                so!(lit!(bothered())),
-                                                so!(lit!(me())),
+                                                so!(
+                                                    so!(lit!(bothered())),
+                                                    so!(lit!(me())),
+                                                ) =>
+                                                fvec!( "bothered", "me" ) ;
+                                                fset!( "bothered", "me" )
                                             ),
                                         ),
                                     ),
@@ -837,8 +928,12 @@ fn test() {
                                 so!(
                                     so!(lit!(vstar())),
                                     so!(
-                                        so!(lit!(bothered())),
-                                        so!(lit!(me())),
+                                        so!(
+                                            so!(lit!(bothered())),
+                                            so!(lit!(me())),
+                                        ) =>
+                                        fvec!( "bothered", "me" ) ;
+                                        fset!( "bothered", "me" )
                                     ),
                                 ),
                             ),
@@ -880,8 +975,12 @@ fn test() {
                                             so!(
                                                 so!(lit!(vstar())),
                                                 so!(
-                                                    so!(lit!(bothered())),
-                                                    so!(lit!(me())),
+                                                    so!(
+                                                        so!(lit!(bothered())),
+                                                        so!(lit!(me())),
+                                                    ) =>
+                                                    fvec!( "bothered", "me" ) ;
+                                                    fset!( "bothered", "me" )
                                                 ),
                                             ),
                                         ),
@@ -927,8 +1026,12 @@ fn test() {
                                 so!(
                                     so!(lit!(vstar())),
                                     so!(
-                                        so!(lit!(bothered())),
-                                        so!(lit!(me())),
+                                        so!(
+                                            so!(lit!(bothered())),
+                                            so!(lit!(me())),
+                                        ) =>
+                                        fvec!( "bothered", "me" ) ;
+                                        fset!( "bothered", "me" )
                                     ),
                                 ),
                             ),
@@ -970,8 +1073,12 @@ fn test() {
                                             so!(
                                                 so!(lit!(vstar())),
                                                 so!(
-                                                    so!(lit!(bothered())),
-                                                    so!(lit!(me())),
+                                                    so!(
+                                                        so!(lit!(bothered())),
+                                                        so!(lit!(me())),
+                                                    ) =>
+                                                    fvec!( "bothered", "me" ) ;
+                                                    fset!( "bothered", "me" )
                                                 ),
                                             ),
                                         ),
@@ -1018,8 +1125,12 @@ fn test() {
                                     so!(
                                         so!(lit!(vstar())),
                                         so!(
-                                            so!(lit!(bothered())),
-                                            so!(lit!(me())),
+                                            so!(
+                                                so!(lit!(bothered())),
+                                                so!(lit!(me())),
+                                            ) =>
+                                            fvec!( "bothered", "me" ) ;
+                                            fset!( "bothered", "me" )
                                         ),
                                     ),
                                 ),
@@ -1061,8 +1172,12 @@ fn test() {
                                                 so!(
                                                     so!(lit!(vstar())),
                                                     so!(
-                                                        so!(lit!(bothered())),
-                                                        so!(lit!(me())),
+                                                        so!(
+                                                            so!(lit!(bothered())),
+                                                            so!(lit!(me())),
+                                                        ) =>
+                                                        fvec!( "bothered", "me" ) ;
+                                                        fset!( "bothered", "me" )
                                                     ),
                                                 ),
                                             ),
@@ -1111,8 +1226,12 @@ fn test() {
                                         so!(
                                             so!(lit!(vstar())),
                                             so!(
-                                                so!(lit!(bothered())),
-                                                so!(lit!(me())),
+                                                so!(
+                                                    so!(lit!(bothered())),
+                                                    so!(lit!(me())),
+                                                ) =>
+                                                fvec!( "bothered", "me" ) ;
+                                                fset!( "bothered", "me" )
                                             ),
                                         ),
                                     ),
@@ -1154,8 +1273,12 @@ fn test() {
                                                     so!(
                                                         so!(lit!(vstar())),
                                                         so!(
-                                                            so!(lit!(bothered())),
-                                                            so!(lit!(me())),
+                                                            so!(
+                                                                so!(lit!(bothered())),
+                                                                so!(lit!(me())),
+                                                            ) =>
+                                                            fvec!( "bothered", "me" ) ;
+                                                            fset!( "bothered", "me" )
                                                         ),
                                                     ),
                                                 ),
