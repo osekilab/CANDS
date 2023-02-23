@@ -1343,6 +1343,34 @@ fn test() {
             )),
         },
         
+        //  Transfer (vstarP, VP)
+        Stage {
+            la: LexicalArray::new(set!(
+                lit!(C()),
+                lit!(we()),
+                lit!(Pres())
+            )),
+            w: Workspace::new(set!(
+                so!(
+                    so!(lit!(vstar())),
+                    so!(
+                        so!(
+                            so!(lit!(know())),
+                            so!(
+                                so!(lit!(who())),
+                                so!(
+                                    so!(lit!(Q())),
+                                    emb_TP(),
+                                ),
+                            ),
+                        ) =>
+                        fvec!( "know", "who", "a", "story", "appeared", "about" ) ;
+                        fset!( "know", "who", "Q", "about", "story", "a", "X", "Y", "appeared", "v", "Past" )
+                    ),
+                )
+            )),
+        },
+        
         //  Select we
         Stage {
             la: LexicalArray::new(set!(
@@ -1354,14 +1382,18 @@ fn test() {
                 so!(
                     so!(lit!(vstar())),
                     so!(
-                        so!(lit!(know())),
                         so!(
-                            so!(lit!(who())),
+                            so!(lit!(know())),
                             so!(
-                                so!(lit!(Q())),
-                                emb_TP(),
+                                so!(lit!(who())),
+                                so!(
+                                    so!(lit!(Q())),
+                                    emb_TP(),
+                                ),
                             ),
-                        ),
+                        ) =>
+                        fvec!( "know", "who", "a", "story", "appeared", "about" ) ;
+                        fset!( "know", "who", "Q", "about", "story", "a", "X", "Y", "appeared", "v", "Past" )
                     ),
                 )
             )),
@@ -1379,14 +1411,18 @@ fn test() {
                     so!(
                         so!(lit!(vstar())),
                         so!(
-                            so!(lit!(know())),
                             so!(
-                                so!(lit!(who())),
+                                so!(lit!(know())),
                                 so!(
-                                    so!(lit!(Q())),
-                                    emb_TP(),
+                                    so!(lit!(who())),
+                                    so!(
+                                        so!(lit!(Q())),
+                                        emb_TP(),
+                                    ),
                                 ),
-                            ),
+                            ) =>
+                            fvec!( "know", "who", "a", "story", "appeared", "about" ) ;
+                            fset!( "know", "who", "Q", "about", "story", "a", "X", "Y", "appeared", "v", "Past" )
                         ),
                     ),
                 )
@@ -1405,14 +1441,18 @@ fn test() {
                     so!(
                         so!(lit!(vstar())),
                         so!(
-                            so!(lit!(know())),
                             so!(
-                                so!(lit!(who())),
+                                so!(lit!(know())),
                                 so!(
-                                    so!(lit!(Q())),
-                                    emb_TP(),
+                                    so!(lit!(who())),
+                                    so!(
+                                        so!(lit!(Q())),
+                                        emb_TP(),
+                                    ),
                                 ),
-                            ),
+                            ) =>
+                            fvec!( "know", "who", "a", "story", "appeared", "about" ) ;
+                            fset!( "know", "who", "Q", "about", "story", "a", "X", "Y", "appeared", "v", "Past" )
                         ),
                     ),
                 )
@@ -1432,14 +1472,18 @@ fn test() {
                         so!(
                             so!(lit!(vstar())),
                             so!(
-                                so!(lit!(know())),
                                 so!(
-                                    so!(lit!(who())),
+                                    so!(lit!(know())),
                                     so!(
-                                        so!(lit!(Q())),
-                                        emb_TP(),
+                                        so!(lit!(who())),
+                                        so!(
+                                            so!(lit!(Q())),
+                                            emb_TP(),
+                                        ),
                                     ),
-                                ),
+                                ) =>
+                                fvec!( "know", "who", "a", "story", "appeared", "about" ) ;
+                                fset!( "know", "who", "Q", "about", "story", "a", "X", "Y", "appeared", "v", "Past" )
                             ),
                         ),
                     ),
@@ -1462,14 +1506,18 @@ fn test() {
                             so!(
                                 so!(lit!(vstar())),
                                 so!(
-                                    so!(lit!(know())),
                                     so!(
-                                        so!(lit!(who())),
+                                        so!(lit!(know())),
                                         so!(
-                                            so!(lit!(Q())),
-                                            emb_TP(),
+                                            so!(lit!(who())),
+                                            so!(
+                                                so!(lit!(Q())),
+                                                emb_TP(),
+                                            ),
                                         ),
-                                    ),
+                                    ) =>
+                                    fvec!( "know", "who", "a", "story", "appeared", "about" ) ;
+                                    fset!( "know", "who", "Q", "about", "story", "a", "X", "Y", "appeared", "v", "Past" )
                                 ),
                             ),
                         ),
@@ -1492,14 +1540,18 @@ fn test() {
                             so!(
                                 so!(lit!(vstar())),
                                 so!(
-                                    so!(lit!(know())),
                                     so!(
-                                        so!(lit!(who())),
+                                        so!(lit!(know())),
                                         so!(
-                                            so!(lit!(Q())),
-                                            emb_TP(),
+                                            so!(lit!(who())),
+                                            so!(
+                                                so!(lit!(Q())),
+                                                emb_TP(),
+                                            ),
                                         ),
-                                    ),
+                                    ) =>
+                                    fvec!( "know", "who", "a", "story", "appeared", "about" ) ;
+                                    fset!( "know", "who", "Q", "about", "story", "a", "X", "Y", "appeared", "v", "Past" )
                                 ),
                             ),
                         ),
@@ -1523,14 +1575,18 @@ fn test() {
                                 so!(
                                     so!(lit!(vstar())),
                                     so!(
-                                        so!(lit!(know())),
                                         so!(
-                                            so!(lit!(who())),
+                                            so!(lit!(know())),
                                             so!(
-                                                so!(lit!(Q())),
-                                                emb_TP(),
+                                                so!(lit!(who())),
+                                                so!(
+                                                    so!(lit!(Q())),
+                                                    emb_TP(),
+                                                ),
                                             ),
-                                        ),
+                                        ) =>
+                                        fvec!( "know", "who", "a", "story", "appeared", "about" ) ;
+                                        fset!( "know", "who", "Q", "about", "story", "a", "X", "Y", "appeared", "v", "Past" )
                                     ),
                                 ),
                             ),
@@ -1556,14 +1612,18 @@ fn test() {
                                     so!(
                                         so!(lit!(vstar())),
                                         so!(
-                                            so!(lit!(know())),
                                             so!(
-                                                so!(lit!(who())),
+                                                so!(lit!(know())),
                                                 so!(
-                                                    so!(lit!(Q())),
-                                                    emb_TP(),
+                                                    so!(lit!(who())),
+                                                    so!(
+                                                        so!(lit!(Q())),
+                                                        emb_TP(),
+                                                    ),
                                                 ),
-                                            ),
+                                            ) =>
+                                            fvec!( "know", "who", "a", "story", "appeared", "about" ) ;
+                                            fset!( "know", "who", "Q", "about", "story", "a", "X", "Y", "appeared", "v", "Past" )
                                         ),
                                     ),
                                 ),
